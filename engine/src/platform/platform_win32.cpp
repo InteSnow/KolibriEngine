@@ -26,9 +26,16 @@ typedef struct Platform {
 
   uint16 width;
   uint16 height;
+
+  bool mcapture;
 } Platform;
 
 static Platform platform;
+
+static void disableCursor(void);
+static void enableCursor(void);
+static void centerCursor(void);
+static void setClipRect(HWND hWnd);
 
 static LRESULT CALLBACK procWinInput(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam);
 
@@ -118,7 +125,7 @@ bool platformInit(const char* appName, int32 x, int32 y, int32 width, int32 heig
     return 0;
   }
   wglSwapIntervalEXT(0);
-
+  
   glClearColor(0.1f, 0.1f, 0.1f, 1);
   
   return 1;
@@ -204,6 +211,7 @@ LRESULT procWinInput(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam) {
       return 0;
 
     case WM_MOUSEMOVE:
+      if (GetFocus() != platform.hWnd) return 0;
       if (released) {
         released = false;
         return 0;
@@ -212,6 +220,15 @@ LRESULT procWinInput(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam) {
       y = GET_Y_LPARAM(lParam);
 
       if (x < 0 || y < 0 || x >= platform.width || y >= platform.height) return 0;
+
+      if (platform.mcapture && x == platform.width/2 && y == platform.height/2) {
+        x = 0;
+        y = 0;
+      } else if (platform.mcapture) {
+        x -= platform.width/2;
+        y -= platform.height/2;
+        centerCursor();
+      }
 
       InputSystem::processMouse(x, y);
       return 0;
@@ -226,7 +243,6 @@ LRESULT procWinInput(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam) {
     case WM_SIZE:
       platform.width = LOWORD(lParam);
       platform.height = HIWORD(lParam);
-      glViewport(0, 0, platform.width, platform.height);
       keOnResize.fire(platform.width, platform.height);
       return 0;
   }
@@ -257,6 +273,44 @@ void consoleWrite(const char* msg, ColorFlags color) {
   WriteConsoleA(hOut, msg, strlen(msg), NULL, NULL);
 
   SetConsoleTextAttribute(hOut, 0x7);
+}
+
+void platformSetCapture(bool mode) {
+  if (mode == platform.mcapture) return;
+  if (mode) disableCursor();
+  else enableCursor();
+  platform.mcapture = mode;
+}
+
+void disableCursor(void) {
+  ShowCursor(0);
+  centerCursor();
+  setClipRect(platform.hWnd);
+}
+
+void enableCursor(void) {
+  ShowCursor(1);
+  setClipRect(NULL);
+}
+
+void centerCursor(void) {
+  POINT pt = {platform.width/2, platform.height/2};
+  ClientToScreen(platform.hWnd, &pt);
+  SetCursorPos(pt.x, pt.y);
+}
+
+void setClipRect(HWND wnd) {
+  if (!wnd) {
+    ClipCursor(NULL);
+    return;
+  }
+
+  RECT r;
+  GetClientRect(wnd, &r);
+  ClientToScreen(wnd, (POINT*)&r.left);
+  ClientToScreen(wnd, (POINT*)&r.right);
+  ClipCursor(&r);
+
 }
 
 #endif

@@ -1,11 +1,13 @@
 #include "InputSystem.h"
 #include "core/Events.h"
+#include "platform/platform.h"
 #include <cstring>
 
 KeyboardState InputSystem::pKeyboard;
 KeyboardState InputSystem::cKeyboard;
 MouseState InputSystem::pMouse;
 MouseState InputSystem::cMouse;
+bool InputSystem::captureMode;
 
 bool InputSystem::init() {
   return true;
@@ -33,6 +35,20 @@ void InputSystem::processButton(ButtonCode button, bool down) {
     keOnMouseButton.fire(button, down);
   }
 }
+
+void InputSystem::setCapture(bool mode) {
+  platformSetCapture(mode);
+  InputSystem::captureMode = mode;
+  if (mode) {
+    InputSystem::cMouse.x = 0;
+    InputSystem::cMouse.y = 0;
+  }
+}
+
+bool InputSystem::getCapture(void) {
+  return InputSystem::captureMode;
+}
+
 void InputSystem::processMouse(int16 x, int16 y) {
   cMouse.x = x;
   cMouse.y = y;

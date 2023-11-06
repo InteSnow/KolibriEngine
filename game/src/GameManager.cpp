@@ -35,7 +35,7 @@ void buttonCallback(uint8 button, bool down) {
 }
 
 void moveCallback(int16 x, int16 y) {
-	KE_INFO("Mouse is at (%d; %d)", x, y);
+	//KE_INFO("Mouse is at (%d; %d)", x, y);
 }
 
 void wheelCallback(int8 delta) {

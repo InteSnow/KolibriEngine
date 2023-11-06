@@ -154,7 +154,7 @@ static void beginDraw(void);
 static void endDraw(void);
 static void createWindow(uint16 x, uint16 y, uint16 width, uint16 height, const char* title);
 
-static void getWindowSize(uint16& width, uint16& height);
+static void getThreadInfo(char info[1024]);
 static uint16 getSkinHeight(void);
 
 static void setInputMode(bool useScancodes);
@@ -162,15 +162,22 @@ static uint8 getKey(void);
 
 static uint32 getMouseEvents(void);
 static void getMousePos(int16& x, int16& y);
+static void setMousePos(int16 x, int16 y);
 static int16 getWheelDelta(void);
+
+static uint32 loadCursor(void* cursor);
+static uint32 setCursor(uint32 cursor);
 
 static void setEventMask(uint32 mask);
 static uint32 getButtonId(void);
 static uint16 getEvent(void);
 
-static void blitWindow(void *bitmap, int32 dst_x, int32 dst_y,
-                      int32 src_x, int32 src_y, int32 w, int32 h,
-                      int32 src_w, int32 src_h, int32 stride);
+static void drawImage(void *bitmap, int32 x, int32 y, int32 w, int32 h);
+
+static void showCursor(bool visibility);
+static void enableCursor(void);
+static void disableCursor(void);
+static void centerCursor(void);
 
 #define BORDER 5
 
@@ -184,11 +191,16 @@ enum PlatformEvents {
 struct Platform {
   uint32 freq;
   uint16 skinh;
+  uint16 wx;
+  uint16 wy;
   uint16 width;
   uint16 height;
   
   OSMesaContext context;
   void* buffer; 
+
+  bool mcapture;
+  uint32 nullCursor;
 };
 
 static Platform platform;
@@ -209,19 +221,21 @@ bool platformInit(const char* appName, int32 x, int32 y, int32 width, int32 heig
   createWindow(x, y, width+2*BORDER, height+platform.skinh+BORDER-1, appName);
   endDraw();
 
+  platform.wx = x+BORDER;
+  platform.wy = y+platform.skinh;
   platform.width = width;
   platform.height = height;
 
   setInputMode(1);
 
   setEventMask(0b10000000000000000000000000100111);
-  platform.context = OSMesaCreateContextExt(OSMESA_BGRA, 0, 0, 0, NULL);
+  platform.context = OSMesaCreateContextExt(OSMESA_RGB, 0, 0, 0, NULL);
   if (!platform.context) {
     KE_ERROR("Failed to create Mesa context");
     return false;
   }
 
-  platform.buffer = malloc(width*height*4*sizeof(GLubyte));
+  platform.buffer = malloc(width*height*3*sizeof(GLubyte));
   if (!OSMesaMakeCurrent(platform.context, platform.buffer, GL_UNSIGNED_BYTE, width, height)) {
     KE_ERROR("Failed to set current context");
   }
@@ -233,6 +247,7 @@ bool platformInit(const char* appName, int32 x, int32 y, int32 width, int32 heig
   return true;
 }
 
+// TODO: destroy context and cursor
 void platformShutdown() {
   con_exit(true);
 }
@@ -244,11 +259,14 @@ void pollEvents() {
   bool down;
   static uint8 extcode = 0;
 
+  uint16 wx, wy;
   uint16 width, height;
+  char info[1024];
 
   uint32 mEvents;
   uint8 button;
   static int16 x = -1, y = -1;
+  bool clear = false;
   int16 ox, oy;
   while ((e = getEvent()) != 0) {
     KeyCode key;
@@ -258,17 +276,25 @@ void pollEvents() {
       createWindow(0, 0, 0, 0, NULL);
       endDraw();
 
-      getWindowSize(width, height);
+      getThreadInfo(info);
+
+      wx = *(uint16*)(info+34) + BORDER;
+      wy = *(uint16*)(info+38) + platform.skinh;
+      width = *(uint16*)(info + 42);
+      height = *(uint16*)(info + 46);
+
+      platform.wx = wx;
+      platform.wy = wy;
+
       width -= 2*BORDER - 1;
       height -= platform.skinh + BORDER - 2;
       if (width != platform.width || height != platform.height) {
-        platform.buffer = malloc(width*height*4*sizeof(GLubyte));
-        memset(platform.buffer, 0, width*height*4*sizeof(GLubyte));
+        platform.buffer = malloc(width*height*3*sizeof(GLubyte));
+        memset(platform.buffer, 0, width*height*3*sizeof(GLubyte));
         OSMesaMakeCurrent(platform.context, platform.buffer, GL_UNSIGNED_BYTE, width, height);
-        glViewport(0, 0, width, height);
-        keOnResize.fire(width, height);
         platform.width = width;
         platform.height = height;
+        keOnResize.fire(platform.width, platform.height);
       }
       break;
     case EVENT_KEY:
@@ -308,13 +334,31 @@ void pollEvents() {
       x -= BORDER;
       y -= platform.skinh;
       if (x < 0 || y < 0 || x >= platform.width || y >= platform.height) {
+        if (platform.mcapture) {
+          centerCursor();
+          break;
+        }
         InputSystem::processButton(BUTTON_LEFT, 0);
         InputSystem::processButton(BUTTON_RIGHT, 0);
         InputSystem::processButton(BUTTON_MIDDLE, 0);
         break;
       }
+      if (platform.mcapture && x == platform.width/2 && y == platform.height/2) {
+        x = 0;
+        y = 0;
+        clear = true;
+      }
       if (!mEvents && (x != ox || y != oy)) {
+        if (platform.mcapture && !clear) {
+          x -= platform.width/2;
+          y -= platform.height/2;
+          centerCursor();
+        }
         InputSystem::processMouse(x, y);
+        if (platform.mcapture) {
+          x = platform.width/2;
+          y = platform.height/2;
+        }
       } else if (mEvents & 0b000001000000000000000) {
         InputSystem::processWheel(getWheelDelta() > 0 ? -1 : 1);
       } else if (mEvents & 0b111110001111100000000) {
@@ -329,13 +373,44 @@ void pollEvents() {
 }
 
 void platformPresent() {
-  blitWindow(platform.buffer,
-    BORDER, platform.skinh, 0, 0,
-    platform.width, platform.height, platform.width, platform.height, platform.width*4);
+  drawImage(platform.buffer, BORDER, platform.skinh, platform.width, platform.height);
 } 
 
+void platformSetCapture(bool mode) {
+  if (platform.mcapture == mode) return;
+  if (mode) disableCursor();
+  else enableCursor();
+  platform.mcapture = mode;
+}
+ 
+void showCursor(bool visibility) {
+  if (visibility) {
+    setCursor(0);
+  } else {
+    if (!platform.nullCursor) {
+      uint32 cursor[4*32*32] = {0};
+      platform.nullCursor = loadCursor(cursor);
+    }
+    setCursor(platform.nullCursor);
+  }
+}
+
+void enableCursor() {
+  showCursor(1);
+}
+
+void disableCursor() {
+  showCursor(0);
+  centerCursor();
+}
+
+void centerCursor() {
+  int16 x = platform.wx + platform.width/2;
+  int16 y = platform.wy + platform.height/2;
+  setMousePos(x, y);
+}
+
 uint64 getTime() {
-   
   uint64 val;
   asm volatile(
   "cpuid"
@@ -419,14 +494,11 @@ void createWindow(uint16 x, uint16 y, uint16 width, uint16 height, const char* t
   );
 }
 
-void getWindowSize(uint16& width, uint16& height) {
-  char buf[1024];
+void getThreadInfo(char info[1024]) {
   asm volatile (
     "int $0x40"
-    :: "a" (9), "b" (buf), "c" (-1)
+    :: "a" (9), "b" (info), "c" (-1)
   );
-  width = *(uint16*)(buf + 42);
-  height = *(uint16*)(buf + 46);
 }
 
 uint16 getSkinHeight(void) {
@@ -478,6 +550,13 @@ void getMousePos(int16& x, int16& y) {
   y = output & 0xFFFF;
 }
 
+void setMousePos(int16 x, int16 y) {
+  asm volatile (
+    "int $0x40"
+    :: "a" (18), "b" (19), "c" (4), "d" (((int32)x << 16) | y)
+  );
+}
+
 int16 getWheelDelta(void) {
   int32 delta;
   asm volatile (
@@ -486,6 +565,26 @@ int16 getWheelDelta(void) {
     : "a" (37), "b" (7)
   );
   return delta & 0xFFFF;
+}
+
+uint32 loadCursor(void* cursor) {
+  uint32 handle;
+  asm volatile (
+    "int $0x40"
+    : "=a" (handle)
+    : "a" (37), "b" (4), "c" (cursor), "d" (2)
+  );
+  return handle;
+}
+
+uint32 setCursor(uint32 cursor) {
+  uint32 old;
+  asm volatile (
+    "int $0x40"
+    : "=a" (old)
+    : "a" (37), "b" (5), "c" (cursor)
+  );
+  return old;
 }
 
 void setEventMask(uint32 mask) {
@@ -515,25 +614,10 @@ uint32 getButtonId() {
   return id >> 8;
 }
 
-void blitWindow(void *bitmap, int32 dst_x, int32 dst_y,
-                int32 src_x, int32 src_y, int32 w, int32 h,
-                int32 src_w, int32 src_h, int32 stride) {
-    volatile BlitInfo bc;
-
-    bc.dstx = dst_x;
-    bc.dsty = dst_y;
-    bc.w    = w;
-    bc.h    = h;
-    bc.srcx = src_x;
-    bc.srcy = src_y;
-    bc.srcw = src_w;
-    bc.srch = src_h;
-    bc.stride = stride;
-    bc.bitmap = bitmap;
-
+void drawImage(void *bitmap, int32 x, int32 y, int32 w, int32 h) {
     asm volatile(
     "int $0x40"
-    :: "a"(73), "b"(0), "c"(&bc.dstx));
+    :: "a"(7), "b"(bitmap), "c"((w << 16) | h), "d"(x << 16 | y));
 };
 
 #endif

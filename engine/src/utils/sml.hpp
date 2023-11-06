@@ -832,7 +832,7 @@ mat<4, 4, T> perspective(T fov, T ratio, T n, T f) {
 	T r = t * ratio;
 	return mat<4, 4, T>(
 		1 / r, 0,     	0,                  0,
-		0,     -1 / t, 	0,                  0,
+		0,     1 / t, 	0,                  0,
 		0,     0,    		f / (f - n),  			-f * n / (f - n),
 		0,     0,    		1,                 0
 		);
@@ -841,8 +841,8 @@ mat<4, 4, T> perspective(T fov, T ratio, T n, T f) {
 template<typename T>
 mat<4, 4, T> lookAt(vec<3, T>& pos, vec<3, T>& target, vec<3, T>& up) {
 	vec<3, T> dir = normalize(target - pos);
-	vec<3, T> right = normalize(cross(up, dir));
-	vec<3, T> cUp = normalize(cross(dir, right));
+	vec<3, T> right = normalize(cross(dir, up));
+	vec<3, T> cUp = normalize(cross(right, dir));
 	return mat<4, 4, T>(
 		right.x, right.y, right.z, 0,
 		cUp.x, cUp.y, cUp.z, 0,
@@ -858,8 +858,8 @@ mat<4, 4, T> lookAt(vec<3, T>& pos, vec<3, T>& target, vec<3, T>& up) {
 template<typename T>
 mat<4, 4, T> lookAt(vec<3, T>& pos, vec<3, T>& target, vec<3, T>&& up) {
 	vec<3, T> dir = normalize(target - pos);
-	vec<3, T> right = normalize(cross(up, dir));
-	vec<3, T> cUp = normalize(cross(dir, right));
+	vec<3, T> right = normalize(cross(dir, up));
+	vec<3, T> cUp = normalize(cross(right, dir));
 	return mat<4, 4, T>(
 		right.x, right.y, right.z, 0,
 		cUp.x, cUp.y, cUp.z, 0,
@@ -875,8 +875,8 @@ mat<4, 4, T> lookAt(vec<3, T>& pos, vec<3, T>& target, vec<3, T>&& up) {
 template<typename T>
 mat<4, 4, T> lookAt(vec<3, T>& pos, vec<3, T>&& target, vec<3, T>& up) {
 	vec<3, T> dir = normalize(target - pos);
-	vec<3, T> right = normalize(cross(up, dir));
-	vec<3, T> cUp = normalize(cross(dir, right));
+	vec<3, T> right = normalize(cross(dir, up));
+	vec<3, T> cUp = normalize(cross(right, dir));
 	return mat<4, 4, T>(
 		right.x, right.y, right.z, 0,
 		cUp.x, cUp.y, cUp.z, 0,
@@ -892,8 +892,8 @@ mat<4, 4, T> lookAt(vec<3, T>& pos, vec<3, T>&& target, vec<3, T>& up) {
 template<typename T>
 mat<4, 4, T> lookAt(vec<3, T>& pos, vec<3, T>&& target, vec<3, T>&& up) {
 	vec<3, T> dir = normalize(target - pos);
-	vec<3, T> right = normalize(cross(up, dir));
-	vec<3, T> cUp = normalize(cross(dir, right));
+	vec<3, T> right = normalize(cross(dir, up));
+	vec<3, T> cUp = normalize(cross(right, dir));
 	return mat<4, 4, T>(
 		right.x, right.y, right.z, 0,
 		cUp.x, cUp.y, cUp.z, 0,
@@ -909,8 +909,8 @@ mat<4, 4, T> lookAt(vec<3, T>& pos, vec<3, T>&& target, vec<3, T>&& up) {
 template<typename T>
 mat<4, 4, T> lookAt(vec<3, T>&& pos, vec<3, T>& target, vec<3, T>& up) {
 	vec<3, T> dir = normalize(target - pos);
-	vec<3, T> right = normalize(cross(up, dir));
-	vec<3, T> cUp = normalize(cross(dir, right));
+	vec<3, T> right = normalize(cross(dir, up));
+	vec<3, T> cUp = normalize(cross(right, dir));
 	return mat<4, 4, T>(
 		right.x, right.y, right.z, 0,
 		cUp.x, cUp.y, cUp.z, 0,
@@ -926,8 +926,8 @@ mat<4, 4, T> lookAt(vec<3, T>&& pos, vec<3, T>& target, vec<3, T>& up) {
 template<typename T>
 mat<4, 4, T> lookAt(vec<3, T>&& pos, vec<3, T>& target, vec<3, T>&& up) {
 	vec<3, T> dir = normalize(target - pos);
-	vec<3, T> right = normalize(cross(up, dir));
-	vec<3, T> cUp = normalize(cross(dir, right));
+	vec<3, T> right = normalize(cross(dir, up));
+	vec<3, T> cUp = normalize(cross(right, dir));
 	return mat<4, 4, T>(
 		right.x, right.y, right.z, 0,
 		cUp.x, cUp.y, cUp.z, 0,
@@ -943,8 +943,8 @@ mat<4, 4, T> lookAt(vec<3, T>&& pos, vec<3, T>& target, vec<3, T>&& up) {
 template<typename T>
 mat<4, 4, T> lookAt(vec<3, T>&& pos, vec<3, T>&& target, vec<3, T>& up) {
 	vec<3, T> dir = normalize(target - pos);
-	vec<3, T> right = normalize(cross(up, dir));
-	vec<3, T> cUp = normalize(cross(dir, right));
+	vec<3, T> right = normalize(cross(dir, up));
+	vec<3, T> cUp = normalize(cross(right, dir));
 	return mat<4, 4, T>(
 		right.x, right.y, right.z, 0,
 		cUp.x, cUp.y, cUp.z, 0,
@@ -960,8 +960,8 @@ mat<4, 4, T> lookAt(vec<3, T>&& pos, vec<3, T>&& target, vec<3, T>& up) {
 template<typename T>
 mat<4, 4, T> lookAt(vec<3, T>&& pos, vec<3, T>&& target, vec<3, T>&& up) {
 	vec<3, T> dir = normalize(target - pos);
-	vec<3, T> right = normalize(cross(up, dir));
-	vec<3, T> cUp = normalize(cross(dir, right));
+	vec<3, T> right = normalize(cross(dir, up));
+	vec<3, T> cUp = normalize(cross(right, dir));
 	return mat<4, 4, T>(
 		right.x, right.y, right.z, 0,
 		cUp.x, cUp.y, cUp.z, 0,

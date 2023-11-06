@@ -1,91 +1,105 @@
 #include "renderer.h"
 #include "core/logger.h"
 #include "utils/sml.hpp"
-#ifdef KE_PLATFORM_KOS32
-#define GL_GLEXT_PROTOTYPES 1
-#include <GL/gl.h>
-#include <GL/glext.h>
-#elif defined(KE_PLATFORM_WIN32)
-#define GLEW_STATIC
-#include <GL/glew.h>
+#include "core/Events.h"
+#include "renderer/Camera.h"
+#include "systems/InputSystem.h"
+#include GL_HEADER
+
+#define STB_IMAGE_IMPLEMENTATION
+#include <stb/stb_image.h>
+
+#ifdef KE_PLATFORM_WIN32
+#define HIRES_TEXTURES 1
+#else
+#define HIRES_TEXTURES 0
 #endif
 
+// static float32 vertices[] = {
+//   //  X      Y      Z     R     G     B
+//   -0.5f, -0.5f,  0.0f, 1.0f, 0.0f, 0.0f,
+//    0.0f,  0.5f,  0.0f, 0.0f, 1.0f, 0.0f,
+//    0.5f, -0.5f,  0.0f, 0.0f, 0.0f, 1.0f
+// };
+
 static float32 vertices[] = {
-  //  X      Y      Z     R     G     B
-  -0.5f, -0.5f,  0.0f, 1.0f, 0.0f, 0.0f,
-   0.0f,  0.5f,  0.0f, 0.0f, 1.0f, 0.0f,
-   0.5f, -0.5f,  0.0f, 0.0f, 0.0f, 1.0f
+  //  X      Y      Z     R     G     B    TX    TY
+  -0.5f, -0.5f,  0.5f, 1.0f, 0.0f, 1.0f, 0.0f, 0.0f,
+   0.5f,  0.5f,  0.5f, 1.0f, 0.0f, 1.0f, 1.0f, 1.0f,
+   0.5f, -0.5f,  0.5f, 1.0f, 0.0f, 1.0f, 1.0f, 0.0f,
+   0.5f,  0.5f,  0.5f, 1.0f, 0.0f, 1.0f, 1.0f, 1.0f,
+  -0.5f, -0.5f,  0.5f, 1.0f, 0.0f, 1.0f, 0.0f, 0.0f,
+  -0.5f,  0.5f,  0.5f, 1.0f, 0.0f, 1.0f, 0.0f, 1.0f,
+
+   0.5f,  0.5f, -0.5f, 0.0f, 1.0f, 1.0f, 0.0f, 1.0f,
+  -0.5f, -0.5f, -0.5f, 0.0f, 1.0f, 1.0f, 1.0f, 0.0f,
+   0.5f, -0.5f, -0.5f, 0.0f, 1.0f, 1.0f, 0.0f, 0.0f,
+   0.5f,  0.5f, -0.5f, 0.0f, 1.0f, 1.0f, 0.0f, 1.0f,
+  -0.5f,  0.5f, -0.5f, 0.0f, 1.0f, 1.0f, 1.0f, 1.0f,
+  -0.5f, -0.5f, -0.5f, 0.0f, 1.0f, 1.0f, 1.0f, 0.0f,
+
+  -0.5f,  0.5f, -0.5f, 1.0f, 1.0f, 0.0f, 0.0f, 1.0f,
+  -0.5f,  0.5f,  0.5f, 1.0f, 1.0f, 0.0f, 1.0f, 1.0f,
+  -0.5f, -0.5f,  0.5f, 1.0f, 1.0f, 0.0f, 1.0f, 0.0f,
+  -0.5f, -0.5f,  0.5f, 1.0f, 1.0f, 0.0f, 1.0f, 0.0f,
+  -0.5f, -0.5f, -0.5f, 1.0f, 1.0f, 0.0f, 0.0f, 0.0f,
+  -0.5f,  0.5f, -0.5f, 1.0f, 1.0f, 0.0f, 0.0f, 1.0f,
+
+   0.5f,  0.5f, -0.5f, 0.0f, 0.0f, 1.0f, 1.0f, 1.0f,
+   0.5f, -0.5f,  0.5f, 0.0f, 0.0f, 1.0f, 0.0f, 0.0f,
+   0.5f,  0.5f,  0.5f, 0.0f, 0.0f, 1.0f, 0.0f, 1.0f,
+   0.5f, -0.5f,  0.5f, 0.0f, 0.0f, 1.0f, 0.0f, 0.0f,
+   0.5f,  0.5f, -0.5f, 0.0f, 0.0f, 1.0f, 1.0f, 1.0f,
+   0.5f, -0.5f, -0.5f, 0.0f, 0.0f, 1.0f, 1.0f, 0.0f,
+
+  -0.5f, -0.5f,  0.5f, 0.0f, 1.0f, 0.0f, 0.0f, 1.0f,
+   0.5f, -0.5f,  0.5f, 0.0f, 1.0f, 0.0f, 1.0f, 1.0f,
+   0.5f, -0.5f, -0.5f, 0.0f, 1.0f, 0.0f, 1.0f, 0.0f,
+   0.5f, -0.5f, -0.5f, 0.0f, 1.0f, 0.0f, 1.0f, 0.0f,
+  -0.5f, -0.5f, -0.5f, 0.0f, 1.0f, 0.0f, 0.0f, 0.0f,
+  -0.5f, -0.5f,  0.5f, 0.0f, 1.0f, 0.0f, 0.0f, 1.0f,
+
+  -0.5f,  0.5f,  0.5f, 1.0f, 0.0f, 0.0f, 0.0f, 0.0f,
+   0.5f,  0.5f, -0.5f, 1.0f, 0.0f, 0.0f, 1.0f, 1.0f,
+   0.5f,  0.5f,  0.5f, 1.0f, 0.0f, 0.0f, 1.0f, 0.0f,
+   0.5f,  0.5f, -0.5f, 1.0f, 0.0f, 0.0f, 1.0f, 1.0f,
+  -0.5f,  0.5f,  0.5f, 1.0f, 0.0f, 0.0f, 0.0f, 0.0f,
+  -0.5f,  0.5f, -0.5f, 1.0f, 0.0f, 0.0f, 0.0f, 1.0f,
 };
 
 static uint32 VAO;
 static uint32 VBO;
-static uint32 vertexShader;
-static uint32 fragmentShader;
-static uint32 shaderProgram;
 
 static mat4 model;
+static mat4 view;
+static mat4 projection;
 
-static const char* vertexSource = 
-"attribute vec3 vPos;\n\
-attribute vec3 vCol;\n\
-varying vec3 fCol;\n\
-uniform mat4 model;\n\
-void main()\n\
-{\n\
-   gl_Position = model*vec4(vPos, 1.0);\n\
-   fCol = vCol;\n\
-}\0";
-static const char* fragmentSource = 
-"varying vec3 fCol;\n\
-void main() {\n"
-  "gl_FragColor = vec4(fCol, 1.0);\n"
-"}\0";
+uint16 Renderer::frameWidth;
+uint16 Renderer::frameHeight;
+Shader Renderer::shader;
+Camera* Renderer::camera;
 
-bool Renderer::init() {
+uint32 boxTex;
+
+bool Renderer::init(uint16 width, uint16 height) {
+  Renderer::frameWidth = width;
+  Renderer::frameHeight = height;
+  Renderer::shader = Shader("resources/shaders/vertex.vert", "resources/shaders/fragment.frag");
+  
+  keOnResize.subscribe(Renderer::onResize);
+  keOnKey.subscribe(Renderer::onKey);
+
   glClearColor(0.1f, 0.1f, 0.1f, 1);
+  
+  glEnable(GL_DEPTH_TEST);
+  glClearDepth(1.0f);
+
+  glEnable(GL_CULL_FACE);
+  glCullFace(GL_BACK);
+  glFrontFace(GL_CW);
+  
   KE_INFO("%s", glGetString(GL_VERSION));
-  vertexShader = glCreateShader(GL_VERTEX_SHADER);
-  glShaderSource(vertexShader, 1, &vertexSource, nullptr);
-  glCompileShader(vertexShader);
-  
-  int  success1;
-  char infoLog1[512];
-  glGetShaderiv(vertexShader, GL_COMPILE_STATUS, &success1);
-  
-  if (!success1) {
-    glGetShaderInfoLog(vertexShader, 512, nullptr, infoLog1);
-    KE_ERROR("Vertex shader compilation failed: %s", infoLog1);
-  }
-
-  fragmentShader = glCreateShader(GL_FRAGMENT_SHADER);
-  glShaderSource(fragmentShader, 1, &fragmentSource, nullptr);
-  glCompileShader(fragmentShader);
- 
-  int  success2;
-  char infoLog2[512];
-  glGetShaderiv(fragmentShader, GL_COMPILE_STATUS, &success2);
-  if (!success2) {
-    glGetShaderInfoLog(fragmentShader, 512, nullptr, infoLog2);
-    KE_ERROR("Fragment shader compilation failed: %s", infoLog2);
-  }
-
-  shaderProgram = glCreateProgram();
-  glAttachShader(shaderProgram, vertexShader);
-  glBindAttribLocation(shaderProgram, 0, "vPos");
-  glBindAttribLocation(shaderProgram, 1, "vCol");
-  glAttachShader(shaderProgram, fragmentShader);
-  glLinkProgram(shaderProgram);
-
-  int  success3;
-  char infoLog3[512];
-  glGetProgramiv(shaderProgram, GL_LINK_STATUS, &success3);
-  if (!success3) {
-    glGetProgramInfoLog(shaderProgram, 512, nullptr, infoLog3);
-    KE_ERROR("Program linking failed: %s", infoLog3);
-  }
-
-  glDeleteShader(vertexShader);
-  glDeleteShader(fragmentShader);
+  KE_INFO("%s", glGetString(GL_RENDERER));
 
   glGenVertexArrays(1, &VAO);
 
@@ -95,32 +109,80 @@ bool Renderer::init() {
   glBindBuffer(GL_ARRAY_BUFFER, VBO);
   glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW);
 
-  glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 6*sizeof(float32), (void*)0);
+  glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 8*sizeof(float32), (void*)0);
   glEnableVertexAttribArray(0);
-  glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 6*sizeof(float32), (void*)(3*sizeof(float32)));
+  glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 8*sizeof(float32), (void*)(3*sizeof(float32)));
   glEnableVertexAttribArray(1);
+  glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, 8*sizeof(float32), (void*)(6*sizeof(float32)));
+  glEnableVertexAttribArray(2);
 
   glBindVertexArray(0);
 
-  model = mat4(1.0f);
+  int32 w, h, channels;
+  const char* texPath;
+  if (HIRES_TEXTURES) {
+    texPath = "resources/textures/box.jpg";
+  } else {
+    texPath = "resources/textures/box128.jpg";
+  }
+  uint8* data = stbi_load(texPath, &w, &h, &channels, STBI_rgb);
+
+  if (!data) {
+    KE_ERROR("Failed to load texture");
+  }
+
+  glGenTextures(1, &boxTex);
+  glBindTexture(GL_TEXTURE_2D, boxTex);
+  glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, w, h, 0, GL_RGB, GL_UNSIGNED_BYTE, data);
+  glGenerateMipmap(GL_TEXTURE_2D);
+  glBindTexture(GL_TEXTURE_2D, 0);
+
+  stbi_image_free(data);
+
+  model = scale(mat4(1.0f), vec3(1.5f));
+
+  Renderer::camera = Camera::create(45.0f, vec3(0, 0, 3.0f));
+  projection = Renderer::camera->getProjection(Renderer::frameWidth, Renderer::frameHeight);
 }
 
 void Renderer::shutdown() {
-
+  Camera::destroy(Renderer::camera);
+  Renderer::shader.destroy();
 }
 
 void Renderer::startFrame(float deltaTime) {
+  Camera::updateAll(deltaTime);
+  
   model = rotate(model, 30.0f*deltaTime, vec3(0, 0, 1.0f));
+  view = Renderer::camera->getView();
 
   glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-  glUseProgram(shaderProgram);
-  int modelLoc = glGetUniformLocation(shaderProgram, "model");
-  glUniformMatrix4fv(modelLoc, 1, GL_FALSE, model.data());
+  Renderer::shader.use();
+  
+  Renderer::shader.setMat4("model", model.data());
+  Renderer::shader.setMat4("view", view.data());
+  Renderer::shader.setMat4("projection", projection.data());
+
+  glBindTexture(GL_TEXTURE_2D, boxTex);
   glBindVertexArray(VAO);
-  glDrawArrays(GL_TRIANGLES, 0, 3);
+  glDrawArrays(GL_TRIANGLES, 0, 36);
 }
 
 void Renderer::endFrame() {
 	glFlush();
+}
+
+void Renderer::onResize(uint16 width, uint16 height) {
+  Renderer::frameWidth = width;
+  Renderer::frameHeight = height;
+  projection = Renderer::camera->getProjection(Renderer::frameWidth, Renderer::frameHeight);
+  glViewport(0, 0, Renderer::frameWidth, Renderer::frameHeight);
+}
+
+void Renderer::onKey(uint8 key, bool down) {
+  if (key == KEY_ESCAPE && down) {
+    Renderer::camera->switchInput();
+    InputSystem::setCapture(!InputSystem::getCapture());
+  }
 }

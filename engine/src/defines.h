@@ -21,3 +21,11 @@ typedef double  float64;
 #else 
 #error "Current OS is not supported!"
 #endif
+
+#ifdef KE_PLATFORM_KOS32
+#define GL_GLEXT_PROTOTYPES 1
+#define GL_HEADER <GL/gl.h>
+#elif defined(KE_PLATFORM_WIN32)
+#define GLEW_STATIC
+#define GL_HEADER <GL/glew.h>
+#endif

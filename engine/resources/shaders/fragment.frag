@@ -1,7 +1,8 @@
-#version 330
+varying vec3 fCol;
+varying vec2 fTexCoords;
 
-layout (location = 0) out vec4 fColor;
+uniform sampler2D texture;
 
-vois main() {
-  fColor = vec4(1.0);
-}
+void main() {
+  gl_FragColor = vec4(mix(fCol, vec3(1.0), .7), 1.0) * texture2D(texture, fTexCoords);
+} 

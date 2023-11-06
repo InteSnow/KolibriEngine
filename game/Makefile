@@ -13,22 +13,28 @@ CPPSRC = $(shell find src/ -name *.cpp)
 TARGETS = $(CSRC:src/%.c=obj/kos32/%.o) $(CPPSRC:src/%.cpp=obj/kos32/%.o) obj/kos32/entry.o
 
 CFLAGS = -std=c++11 -c -O2 -D_DEBUG -DKOS32 -fno-ident -fomit-frame-pointer -U__WIN32__ -U_Win32 -U_WIN32 -U__MINGW32__ -UWIN32
-IFLAGS = -I$(KOLIBRI_SDK)/sources/newlib/libc/include -I$(KOLIBRI_SDK)/sources/Mesa/mesa-9.2.5/include -I../engine/src
+IFLAGS = -I$(KOLIBRI_SDK)/sources/newlib/libc/include -I$(KOLIBRI_SDK)/sources/libstdc++-v3/include -I$(KOLIBRI_SDK)/sources/Mesa/mesa-9.2.5/include -I../engine/src
 SCRIPT = app.lds
 LDFLAGS = -static -nostdlib -T$(SCRIPT) --image-base 0 
 LFLAGS = -L$(MSYS)/home/autobuild/tools/win32/mingw32/lib -L../bin/kos32
-LIBS = -lkoengine -losmesa.dll -lGL.dll -lglsl -lsupc++ -lstdc++ -lgcc -lc.dll 
+LIBS = -lkoengine -losmesa.dll -lGL.dll -lglsl -lstdc++ -lsupc++ -lgcc -lc.dll 
 
 TRANSFER = F:/
 
 default: game wgame
+
+RESOURCES = $(shell find ../engine/resources/)
+
+resources: $(RESOURCES)
+	cp -r ../engine/resources ../bin/kos32 
+	cp -r ../engine/resources ../bin/win32
+	cp -r ../bin $(TRANSFER)
 
 game: $(GAME)
 	
 $(GAME): $(TARGETS) $(ENGINE) Makefile
 	$(LD) $(LDFLAGS) $(LFLAGS) $(TARGETS) -o $(GAME) $(LIBS)
 	$(OBJCOPY) $(GAME) -O binary
-	cp $(GAME) $(TRANSFER)
 	
 obj/kos32/%.o: src/%.c Makefile
 	@mkdir -p $(dir $@)
@@ -55,13 +61,15 @@ WTARGETS = $(CSRC:src/%.c=obj/win32/%.o) $(CPPSRC:src/%.cpp=obj/win32/%.o) obj/w
 
 WCFLAGS = -std=c++11 -c -O2 -D_DEBUG
 WIFLAGS = -I../engine/src
+WLDFLAGS = -static -static-libgcc -static-libstdc++
 WLFLAGS = -L../bin/win32
 WLIBS = -lkoengine -lglew32 -lgdi32 -lopengl32
 
 wgame: $(WGAME)
 
 $(WGAME): $(WTARGETS) $(WENGINE) Makefile
-	$(WCC) $(WLFLAGS) $(WTARGETS) -o $(WGAME) $(WLIBS)
+	$(WCC) $(WLDFLAGS) $(WLFLAGS) $(WTARGETS) -o $(WGAME) $(WLIBS)
+	cp -r ../bin $(TRANSFER)
 
 obj/win32/%.o: src/%.c Makefile
 	@mkdir -p $(dir $@)

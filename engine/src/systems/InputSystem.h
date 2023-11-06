@@ -154,6 +154,8 @@ class InputSystem {
   static MouseState pMouse;
   static MouseState cMouse;
 
+  static bool captureMode;
+
 public:
   static bool init(void);
   static void shutdown(void);
@@ -173,6 +175,9 @@ public:
   static bool wasButtonDown(ButtonCode button); 
   static bool isButtonUp(ButtonCode button); 
   static bool isButtonDown(ButtonCode button); 
+
+  static void setCapture(bool mode);
+  static bool getCapture(void);
 
   static void getMousePos(int16& x, int16& y);
   static void getPrevMousePos(int16& x, int16& y);
