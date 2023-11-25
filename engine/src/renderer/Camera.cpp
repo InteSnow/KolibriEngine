@@ -36,7 +36,6 @@ void Camera::destroy(Camera* cam) {
 }
 
 void Camera::updateAll(float32 deltaTime) {
-  //KE_INFO("UPS = %f", 1/deltaTime);
   for (auto* cam : cameras) {
     if (!cam->inputEnabled) continue;
 

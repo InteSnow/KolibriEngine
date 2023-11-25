@@ -7,7 +7,6 @@
 #include <cstdio>
 #include <map>
 #include <cstdlib>
-//#include <GL/osmesa.h>
 #include <GL/gl.h>
 #include <kosgl.h> 
 
@@ -198,8 +197,6 @@ struct Platform {
   uint16 height;
   
   KOSGLContext context;
-  //OSMesaContext context;
-  //void* buffer;
 
   bool mcapture;
   uint32 nullCursor;
@@ -232,20 +229,10 @@ bool platformInit(const char* appName, int32 x, int32 y, int32 width, int32 heig
 
   setEventMask(0b10000000000000000000000000100111);
   platform.context = kosglCreateContext(NULL, 0);
-  //platform.context = OSMesaCreateContextExt(OSMESA_RGB, 0, 0, 0, NULL);
-  // if (!platform.context) {
-  //   KE_ERROR("Failed to create Kolibri context");
-  //   return false;
-  // }
 
-  //platform.buffer = malloc(width*height*3*sizeof(GLubyte));
   if (!kosglMakeCurrent(BORDER, platform.skinh, platform.width, platform.height, platform.context)) {
     KE_ERROR("Failed to set current context");
   } 
-  // if (!OSMesaMakeCurrent(platform.context, platform.buffer, GL_UNSIGNED_BYTE, width, height)) {
-  //   KE_ERROR("Failed to set current context");
-  // }
-  // OSMesaPixelStore(OSMESA_Y_UP, 0);
   
   glClearColor(0.1f, 0.1f, 0.1f, 1);
   glViewport(0, 0, width, height);
@@ -256,8 +243,6 @@ bool platformInit(const char* appName, int32 x, int32 y, int32 width, int32 heig
 // TODO: destroy cursor
 void platformShutdown() {
   kosglDestroyContext(platform.context);
-  //OSMesaDestroyContext(platform.context);
-  //free(platform.buffer);
   con_exit(true);
 }
 
@@ -298,11 +283,9 @@ void pollEvents() {
       width -= 2*BORDER - 1;
       height -= platform.skinh + BORDER - 2;
       if (width != platform.width || height != platform.height) {
-        //platform.buffer = malloc(width*height*3);
         kosglMakeCurrent(BORDER, platform.skinh, platform.width, platform.height, platform.context);
-        //memset(platform.buffer, 0, width*height*3*sizeof(GLubyte));
-        //OSMesaMakeCurrent(platform.context, platform.buffer, GL_UNSIGNED_BYTE, width, height);
         glViewport(0, 0, width, height);
+
         platform.width = width;
         platform.height = height;
         keOnResize.fire(platform.width, platform.height);
@@ -385,7 +368,6 @@ void pollEvents() {
 
 void platformPresent() {
   kosglSwapBuffers();
-  //drawImage(platform.buffer, BORDER, platform.skinh, platform.width, platform.height);
 } 
 
 void platformSetCapture(bool mode) {

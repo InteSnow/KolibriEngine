@@ -3,7 +3,6 @@
 #include "systems/InputSystem.h"
 #include "core/Events.h"
 #include "renderer/renderer.h"
-#include <chrono>
 
 bool shouldExit = false;
 
