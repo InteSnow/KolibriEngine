@@ -1,22 +1,20 @@
 #pragma once
 #include "defines.h"
-#include "Shader.h"
+//#include "Shader.h"
 #include "Camera.h"
 
 class Renderer {
   static uint16 frameWidth;
   static uint16 frameHeight;
 
-  static Shader shader;
-
-  static Camera* camera;
-
+  friend void Camera::updateAll(float32);
 public:
+  static Camera* camera;
   static bool init(uint16 width, uint16 height);
 
   static void shutdown(void);
 
-  static void startFrame(float deltaTime);
+  static void startFrame(void);
 
   static void endFrame(void);
 

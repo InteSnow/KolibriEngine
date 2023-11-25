@@ -13,11 +13,11 @@ CPPSRC = $(shell find src/ -name *.cpp)
 TARGETS = $(CSRC:src/%.c=obj/kos32/%.o) $(CPPSRC:src/%.cpp=obj/kos32/%.o) obj/kos32/entry.o
 
 CFLAGS = -std=c++11 -c -O2 -D_DEBUG -DKOS32 -fno-ident -fomit-frame-pointer -U__WIN32__ -U_Win32 -U_WIN32 -U__MINGW32__ -UWIN32
-IFLAGS = -I$(KOLIBRI_SDK)/sources/newlib/libc/include -I$(KOLIBRI_SDK)/sources/libstdc++-v3/include -I$(KOLIBRI_SDK)/sources/Mesa/mesa-9.2.5/include -I../engine/src
+IFLAGS = -I$(KOLIBRI_SDK)/sources/newlib/libc/include -I$(KOLIBRI_SDK)/sources/libstdc++-v3/include -I../engine/src -ID:/source/kolibri
 SCRIPT = app.lds
 LDFLAGS = -static -nostdlib -T$(SCRIPT) --image-base 0 
 LFLAGS = -L$(MSYS)/home/autobuild/tools/win32/mingw32/lib -L../bin/kos32
-LIBS = -lkoengine -losmesa.dll -lGL.dll -lglsl -lstdc++ -lsupc++ -lgcc -lc.dll 
+LIBS = -lkoengine -lTinyGL -lGL.dll -lglsl -lstdc++ -lsupc++ -lgcc -lc.dll 
 
 TRANSFER = F:/
 
@@ -60,7 +60,7 @@ WGAME = ../bin/win32/game.exe
 WTARGETS = $(CSRC:src/%.c=obj/win32/%.o) $(CPPSRC:src/%.cpp=obj/win32/%.o) obj/win32/entry.o
 
 WCFLAGS = -std=c++11 -c -O2 -D_DEBUG
-WIFLAGS = -I../engine/src
+WIFLAGS = -I../engine/src -ID:/source/kolibriw
 WLDFLAGS = -static -static-libgcc -static-libstdc++
 WLFLAGS = -L../bin/win32
 WLIBS = -lkoengine -lglew32 -lgdi32 -lopengl32

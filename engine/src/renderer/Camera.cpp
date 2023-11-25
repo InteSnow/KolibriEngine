@@ -1,4 +1,5 @@
 #include "renderer/Camera.h"
+#include "renderer/renderer.h"
 #include "systems/InputSystem.h"
 #include "core/logger.h"
 #include <unordered_set>
@@ -50,7 +51,7 @@ void Camera::updateAll(float32 deltaTime) {
     InputSystem::getMousePos(dx, dy);
     if (!dx && !dy) continue;
 
-    float distance = deltaTime*SENSITIVITY;
+    float distance = 0.001f*SENSITIVITY;
     cam->yaw -= dx * distance;
     cam->pitch -= dy * distance;
   

@@ -52,7 +52,6 @@ bool InputSystem::getCapture(void) {
 void InputSystem::processMouse(int16 x, int16 y) {
   cMouse.x = x;
   cMouse.y = y;
-
   keOnMouseMove.fire(x, y);
 }
 

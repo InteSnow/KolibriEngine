@@ -8,7 +8,11 @@
 bool shouldExit = false;
 
 static void exitLoop(void);
-static float deltaTime;
+
+static TimeInfo _Time = {};
+
+const TimeInfo* Time = &_Time;
+
 bool EngineLoop::init() {
   InputSystem::init();
 
@@ -33,10 +37,13 @@ bool EngineLoop::tick() {
   pollEvents();
   InputSystem::update();
   this->gameManager.update();
-
   end = getTime();
+  _Time.deltaTime = (end - start)/1000000.0f;
+  _Time.time += _Time.deltaTime;
   //KE_WARN("FPS = %f", 1000000.0f/(ds - start));
-  Renderer::startFrame((end - start)/1000000.0f);
+
+  Renderer::startFrame();
+  this->gameManager.render();
   Renderer::endFrame(); 
 
   ds = getTime();

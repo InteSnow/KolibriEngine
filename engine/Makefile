@@ -11,7 +11,7 @@ CPPSRC = $(filter-out src/entry.cpp, $(shell find src/ -name *.cpp))
 TARGETS = $(CSRC:src/%.c=obj/kos32/%.o) $(CPPSRC:src/%.cpp=obj/kos32/%.o)
 
 CFLAGS = -DKOS32 -D_DEBUG -std=c++11 -c -O2 -fno-ident -fomit-frame-pointer -Wno-pointer-arith -U__WIN32__ -U_Win32 -U_WIN32 -U__MINGW32__ -UWIN32 
-IFLAGS = -I$(KOLIBRI_SDK)/sources/newlib/libc/include -I$(KOLIBRI_SDK)/sources/libstdc++-v3/include -I$(KOLIBRI_SDK)/sources/Mesa/mesa-9.2.5/include -Isrc -ID:/source/kolibri
+IFLAGS = -I$(KOLIBRI_SDK)/sources/newlib/libc/include -I$(KOLIBRI_SDK)/sources/libstdc++-v3/include -Isrc -ID:/source/kolibri
 
 default: engine wengine
 
@@ -41,7 +41,7 @@ WENGINE = ../bin/win32/libkoengine.a
 WTARGETS = $(CSRC:src/%.c=obj/win32/%.o) $(CPPSRC:src/%.cpp=obj/win32/%.o)
 
 WCFLAGS = -std=c++11 -c -O2 -D_DEBUG
-WIFLAGS = -Isrc -ID:/source/kolibri
+WIFLAGS = -Isrc -ID:/source/kolibriw
 
 wengine: $(WENGINE)
 
