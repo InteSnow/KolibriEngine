@@ -6,8 +6,11 @@ struct Texture {
 
   static void destroy(const Texture& tex);
 
-  void bind(void);
+  void bind(int32 slot);
+
+  void unbind(void);
 
 private:
   uint32 handle;
+  int32 slot;
 };

@@ -18,14 +18,15 @@ static std::unordered_set<Camera*> cameras;
 
 Camera* Camera::create(float32 fov, vec3 pos, vec3 front, vec3 up) {
   Camera* cam = new Camera;
-
-  cam->fov = fov;
-  cam->pos = pos;
+ 
+  cam->fov = fov; 
+  cam->pos = pos; 
   cam->front = normalize(front);
   cam->up = normalize(up);
   cam->yaw = 180.0f;
   cam->pitch = 0.0f;
   cam->right = normalize(cross(cam->front, cam->up));
+
   cameras.insert(cam);
   return cam;
 }

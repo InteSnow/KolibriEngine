@@ -29,19 +29,24 @@ bool Renderer::init(uint16 width, uint16 height) {
   glFrontFace(GL_CW);
 
 #ifdef KE_PLATFORM_WIN32
-  glTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_COMBINE);
-  glTexEnvi(GL_TEXTURE_ENV, GL_COMBINE_RGB, GL_INTERPOLATE);
+  glTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_MODULATE);
+  //glTexEnvi(GL_TEXTURE_ENV, GL_COMBINE_RGB, GL_INTERPOLATE);
   
-  glTexEnvi(GL_TEXTURE_ENV, GL_SOURCE0_RGB, GL_TEXTURE);
-  glTexEnvi(GL_TEXTURE_ENV, GL_OPERAND0_RGB, GL_COLOR);
-  glTexEnvi(GL_TEXTURE_ENV, GL_SOURCE1_RGB, GL_PRIMARY_COLOR);
-  glTexEnvi(GL_TEXTURE_ENV, GL_OPERAND1_RGB, GL_COLOR);
-  glTexEnvi(GL_TEXTURE_ENV, GL_SOURCE2_RGB, GL_PRIMARY_COLOR);
-  glTexEnvi(GL_TEXTURE_ENV, GL_OPERAND2_RGB, GL_ALPHA);
+  // glTexEnvi(GL_TEXTURE_ENV, GL_SOURCE0_RGB, GL_TEXTURE);
+  // glTexEnvi(GL_TEXTURE_ENV, GL_OPERAND0_RGB, GL_COLOR);
+  // glTexEnvi(GL_TEXTURE_ENV, GL_SOURCE1_RGB, GL_PRIMARY_COLOR);
+  // glTexEnvi(GL_TEXTURE_ENV, GL_OPERAND1_RGB, GL_COLOR);
+  // glTexEnvi(GL_TEXTURE_ENV, GL_SOURCE2_RGB, GL_PRIMARY_COLOR);
+  // glTexEnvi(GL_TEXTURE_ENV, GL_OPERAND2_RGB, GL_ALPHA);
 #endif
 
   glHint(GL_PERSPECTIVE_CORRECTION_HINT, GL_FASTEST);
   glEnable(GL_TEXTURE_2D);
+
+  glEnable(GL_LIGHTING);
+  glEnable(GL_NORMALIZE);
+  glEnable(GL_COLOR_MATERIAL);
+  glColorMaterial(GL_FRONT, GL_AMBIENT_AND_DIFFUSE);
 
   camera = Camera::create(45.0f, vec3(0, 0, 3.0f));
   projection = camera->getProjection(frameWidth, frameHeight);
@@ -55,9 +60,11 @@ void Renderer::startFrame(void) {
   Camera::updateAll(Time->deltaTime);
   
 	mat4 view = Renderer::camera->getView();
+  glMatrixMode(GL_MODELVIEW);
+  glLoadMatrixf(view.data());
+
   glMatrixMode(GL_PROJECTION);
   glLoadMatrixf(projection.data());
-  glMultMatrixf(view.data());
   
   glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 }
