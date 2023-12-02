@@ -5,7 +5,7 @@
 #include <unordered_set>
 
 #define SPEED 2.0f
-#define SENSITIVITY 30.0f
+#define SENSITIVITY 15.0f
 
 enum DirectionFlagBits {
   DIR_FORWARD = 0x01,
