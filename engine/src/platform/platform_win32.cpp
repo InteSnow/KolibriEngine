@@ -22,6 +22,8 @@ typedef struct Platform {
   DWORD consoleMode;
 
   HDC device;
+  HDC bufDC;
+  HBITMAP bufBits;
   HGLRC context;
 
   uint16 width;
@@ -39,11 +41,12 @@ static void setClipRect(HWND hWnd);
 
 static LRESULT CALLBACK procWinInput(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam);
 
+static uint8* buf;
+
 bool platformInit(const char* appName, int32 x, int32 y, int32 width, int32 height) {
 
   platform.width = width;
   platform.height = height;
-
   SetConsoleTitleA(appName);
 
   platform.hInstance = GetModuleHandleA(0);
@@ -107,7 +110,7 @@ bool platformInit(const char* appName, int32 x, int32 y, int32 width, int32 heig
 
   platform.device = GetDC(platform.hWnd);
   uint32 pixelFormat = ChoosePixelFormat(platform.device, &pfd);
-  
+
   if (!SetPixelFormat(platform.device, pixelFormat, &pfd)) {
     MessageBoxA(NULL, "Failed to set pixel format", "Fatal error", MB_ICONERROR | MB_OK);
     return 0;
@@ -135,6 +138,7 @@ void platformShutdown() {
   wglMakeCurrent(platform.device, NULL);
   wglDeleteContext(platform.context);
 
+  ReleaseDC(platform.hWnd, platform.device);
   SetConsoleMode(GetStdHandle(STD_INPUT_HANDLE), platform.consoleMode);
 
   if (platform.hWnd) {

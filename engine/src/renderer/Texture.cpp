@@ -50,7 +50,7 @@ void Texture::destroy(const Texture& tex) {
   glDeleteTextures(1, &tex.handle);
 }
 
-void Texture::bind(int slot) {
+void Texture::bind(int32 slot) {
   this->slot = slot;
   glActiveTexture(GL_TEXTURE0+this->slot);
   glBindTexture(GL_TEXTURE_2D, this->handle);

@@ -17,9 +17,8 @@ bool Renderer::init(uint16 width, uint16 height) {
   frameWidth = width;
   frameHeight = height;
 
-  keOnResize.subscribe(Renderer::onResize);
   keOnKey.subscribe(Renderer::onKey);
-
+  keOnResize.subscribe(Renderer::onResize);
   glClearColor(0.1f, 0.1f, 0.1f, 1);
   glEnable(GL_DEPTH_TEST);
   glClearDepth(1.0f);
@@ -50,6 +49,8 @@ bool Renderer::init(uint16 width, uint16 height) {
 
   camera = Camera::create(45.0f, vec3(0, 0, 3.0f));
   projection = camera->getProjection(frameWidth, frameHeight);
+
+  return 1;
 }
 
 void Renderer::shutdown() {
@@ -57,8 +58,6 @@ void Renderer::shutdown() {
 }
 
 void Renderer::startFrame(void) {
-  Camera::updateAll(Time->deltaTime);
-  
 	mat4 view = Renderer::camera->getView();
   glMatrixMode(GL_MODELVIEW);
   glLoadMatrixf(view.data());
@@ -77,7 +76,7 @@ void Renderer::onResize(uint16 width, uint16 height) {
   frameWidth = width;
   frameHeight = height;
   projection = camera->getProjection(frameWidth, frameHeight);
-  glViewport(0, 0, frameWidth, frameHeight);
+  glViewport(0, 0, width, height);
 }
 
 void Renderer::onKey(uint8 key, bool down) {

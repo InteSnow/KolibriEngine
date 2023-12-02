@@ -1,7 +1,7 @@
 #pragma once
 #include <initializer_list>
 #include <cmath>
-#include <unordered_map>
+#include <cstdlib>
 
 #ifndef M_PI
 #define M_PI		3.14159265358979323846
@@ -1188,6 +1188,23 @@ T clamp(T val, T low, T high) {
 	if (val < low) val = low;
 	if (val > high) val = high;
 	return val;
+}
+
+template <typename T>
+vec<2, T> clamp(vec<2, T> val, vec<2, T> low, vec<2, T> high) {
+	return vec<2, T>(clamp(val.x, low.x, high.x), clamp(val.y, low.y, high.y));
+}
+
+template <typename T>
+vec<3, T> clamp(vec<3, T> val, vec<3, T> low, vec<3, T> high) {
+	return vec<3, T>(clamp(val.x, low.x, high.x), clamp(val.y, low.y, high.y),
+		clamp(val.z, low.z, high.z));
+}
+
+template <typename T>
+vec<4, T> clamp(vec<4, T> val, vec<4, T> low, vec<4, T> high) {
+	return vec<4, T>(clamp(val.x, low.x, high.x), clamp(val.y, low.y, high.y),
+		clamp(val.z, low.z, high.z), clamp(val.w, low.w, high.w));
 }
 
 //Complex numbers

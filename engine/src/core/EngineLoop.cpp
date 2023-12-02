@@ -22,7 +22,6 @@ bool EngineLoop::init() {
   Renderer::init(400, 400);
   
   keOnQuit.subscribe(exitLoop);
-
   this->gameManager.init();
 
   return 1;
@@ -30,12 +29,13 @@ bool EngineLoop::init() {
 
 bool EngineLoop::tick() { 
   static uint64 start = getTime();
-  static uint64 ds = start;
   static uint64 end;
 
   pollEvents();
   InputSystem::update();
+  Camera::updateAll(_Time.deltaTime);
   this->gameManager.update();
+
   end = getTime();
   _Time.deltaTime = (end - start)/1000000.0f;
   _Time.time += _Time.deltaTime;
@@ -45,7 +45,6 @@ bool EngineLoop::tick() {
   this->gameManager.render();
   Renderer::endFrame(); 
 
-  ds = getTime();
   platformPresent();
   start = end;
 
