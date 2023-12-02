@@ -38,7 +38,7 @@ void Model::draw(void) {
   vec3 color;
   glBegin(GL_TRIANGLES);
   for (uint32 i = 0; i < this->size; i++) {
-    color = this->color * vec3(this->vertices[i].color);
+    color = this->color * this->vertices[i].color;
     glNormal3fv(&this->vertices[i].normal.x);
     glColor3fv(&color.x);
     glTexCoord2fv(&this->vertices[i].texCoords.x);

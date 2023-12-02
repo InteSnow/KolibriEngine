@@ -30,6 +30,16 @@ typedef struct Platform {
   uint16 height;
 
   bool mcapture;
+  bool released;
+  bool unfocused;
+
+  bool fullscreen;
+  bool fchanged;
+  bool mstate;
+  bool toggling;
+  int32 wstyle;
+  WINDOWPLACEMENT wplace;
+
 } Platform;
 
 static Platform platform;
@@ -167,7 +177,16 @@ LRESULT procWinInput(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam) {
   bool down;
   POINT pos;
   bool outside;
-  static bool released = false;
+
+  if (platform.fchanged && platform.mstate) {
+    platformSetCapture(true);
+    platform.fchanged = false;
+  } else if (platform.unfocused) {
+    if (platform.mcapture) {
+      centerCursor();
+    }
+  }
+
   switch (uMsg) {
     case WM_DESTROY:
       keOnQuit.fire();
@@ -210,18 +229,30 @@ LRESULT procWinInput(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam) {
       && InputSystem::isButtonUp(BUTTON_RIGHT) 
       && InputSystem::isButtonUp(BUTTON_MIDDLE)) {
         ReleaseCapture();
-        released = true;
+        platform.released = true;
       }
       return 0;
 
     case WM_MOUSEMOVE:
-      if (GetFocus() != platform.hWnd) return 0;
-      if (released) {
-        released = false;
+      if (GetFocus() != platform.hWnd) {
+        if (!platform.unfocused && platform.mcapture) {
+          InputSystem::processMouse(0, 0);
+        }
+        platform.unfocused = true;
         return 0;
       }
+      if (platform.released) {
+        platform.released = false;
+        return 0;
+      }
+      
+      if (platform.unfocused) {
+        platform.unfocused = false;
+        return 0;
+      }
+
       x = GET_X_LPARAM(lParam);
-      y = GET_Y_LPARAM(lParam);
+      y = GET_Y_LPARAM(lParam);    
 
       if (x < 0 || y < 0 || x >= platform.width || y >= platform.height) return 0;
 
@@ -245,6 +276,7 @@ LRESULT procWinInput(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam) {
       return 0;
 
     case WM_SIZE:
+      if (platform.toggling) return 0;
       platform.width = LOWORD(lParam);
       platform.height = HIWORD(lParam);
       keOnResize.fire(platform.width, platform.height);
@@ -315,6 +347,30 @@ void setClipRect(HWND wnd) {
   ClientToScreen(wnd, (POINT*)&r.right);
   ClipCursor(&r);
 
+}
+
+void platformToggleFullscreen() {
+  platform.fullscreen = !platform.fullscreen;
+  
+  if (platform.fullscreen) {
+    platform.wstyle = GetWindowLong(platform.hWnd, GWL_STYLE);
+    GetWindowPlacement(platform.hWnd, &platform.wplace);
+
+    platform.toggling = true;
+    SetWindowLong(platform.hWnd, GWL_STYLE, WS_POPUP);
+    platform.toggling = false;
+
+    ShowWindow(platform.hWnd, SW_SHOWMAXIMIZED);
+  } else {
+    SetWindowLong(platform.hWnd, GWL_STYLE, platform.wstyle);
+    SetWindowPlacement(platform.hWnd, &platform.wplace);
+    ShowWindow(platform.hWnd, SW_SHOW);
+  }
+
+  platform.fchanged = true;
+  platform.mstate = platform.mcapture;
+  platformSetCapture(false);
+  platform.unfocused = true;
 }
 
 #endif

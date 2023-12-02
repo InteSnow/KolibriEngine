@@ -7,6 +7,7 @@
 bool shouldExit = false;
 
 static void exitLoop(void);
+static void keyCallback(uint8 key, bool down);
 
 static TimeInfo _Time = {};
 
@@ -22,6 +23,7 @@ bool EngineLoop::init() {
   Renderer::init(400, 400);
   
   keOnQuit.subscribe(exitLoop);
+  keOnKey.subscribe(keyCallback);
   this->gameManager.init();
 
   return 1;
@@ -61,6 +63,12 @@ void EngineLoop::exit() {
   InputSystem::shutdown();
 }
 
-void exitLoop(void) {
+void exitLoop() {
   shouldExit = true;
+}
+
+void keyCallback(uint8 key, bool down) {
+  if (key == KEY_F11 && down) {
+    platformToggleFullscreen();
+  }
 }

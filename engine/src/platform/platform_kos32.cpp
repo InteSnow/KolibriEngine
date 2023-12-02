@@ -376,6 +376,10 @@ void platformSetCapture(bool mode) {
   else enableCursor();
   platform.mcapture = mode;
 }
+
+void platformToggleFullscreen() {
+  
+}
  
 void showCursor(bool visibility) {
   if (visibility) {

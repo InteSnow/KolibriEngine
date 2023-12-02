@@ -21,3 +21,5 @@ uint64 getTime(void);
 void consoleWrite(const char* msg, ColorFlags color);
 
 void platformSetCapture(bool mode);
+
+void platformToggleFullscreen(void);
