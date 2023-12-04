@@ -70,11 +70,12 @@ int kosglMakeCurrent( int win_x0, int win_y0,int win_x, int win_y, KOSGLContext 
   TinyGLContext *ctx = (TinyGLContext *) ctx1;
   int mode;
   ZBuffer *zb;
- 
+  
+  ctx->x = win_x0;
+  ctx->y = win_y0;
   if (ctx->gl_context == NULL) {
       /* create the TinyGL context */
-      ctx->x = win_x0;
-	  ctx->y = win_y0;
+    
 	  ctx->dx = win_x;
 	  ctx->dy = win_y;
 

@@ -152,7 +152,10 @@ static uint32 __stdcall (*con_set_flags)(uint32 newFlags) = NULL;
 
 static void beginDraw(void);
 static void endDraw(void);
-static void createWindow(uint16 x, uint16 y, uint16 width, uint16 height, const char* title);
+static void createWindow(uint16 x, uint16 y, uint16 width, uint16 height, uint16 style, const char* title);
+static void resizeWindow(uint16 x, uint16 y, uint16 width, uint16 height);
+
+static void getScreenSize(uint16& width, uint16& height);
 
 static void getThreadInfo(char info[1024]);
 static uint16 getSkinHeight(void);
@@ -167,6 +170,7 @@ static int16 getWheelDelta(void);
 
 static uint32 loadCursor(void* cursor);
 static uint32 setCursor(uint32 cursor);
+static void deleteCursor(uint32 cursor);
 
 static void setEventMask(uint32 mask);
 static uint32 getButtonId(void);
@@ -200,6 +204,15 @@ struct Platform {
 
   bool mcapture;
   uint32 nullCursor;
+
+  uint16 px;
+  uint16 py;
+
+  uint16 oldx;
+  uint16 oldy;
+  uint16 oldw;
+  uint16 oldh;
+  bool fullscreen;
 };
 
 static Platform platform;
@@ -217,11 +230,14 @@ bool platformInit(const char* appName, int32 x, int32 y, int32 width, int32 heig
   platform.skinh = getSkinHeight();
   
   beginDraw();
-  createWindow(x, y, width+2*BORDER, height+platform.skinh+BORDER-1, appName);
+  createWindow(x, y, width+2*BORDER, height+platform.skinh+BORDER-1, 3, appName);
   endDraw();
 
-  platform.wx = x+BORDER;
-  platform.wy = y+platform.skinh;
+  platform.px = BORDER;
+  platform.py = platform.skinh;
+
+  platform.wx = x+platform.px;
+  platform.wy = y+platform.py;
   platform.width = width;
   platform.height = height;
 
@@ -230,7 +246,7 @@ bool platformInit(const char* appName, int32 x, int32 y, int32 width, int32 heig
   setEventMask(0b10000000000000000000000000100111);
   platform.context = kosglCreateContext(NULL, 0);
 
-  if (!kosglMakeCurrent(BORDER, platform.skinh, platform.width, platform.height, platform.context)) {
+  if (!kosglMakeCurrent(platform.px, platform.py, platform.width, platform.height, platform.context)) {
     KE_ERROR("Failed to set current context");
   } 
   
@@ -240,8 +256,10 @@ bool platformInit(const char* appName, int32 x, int32 y, int32 width, int32 heig
   return true;
 }
 
-// TODO: destroy cursor
 void platformShutdown() {
+  if (platform.nullCursor) {
+    deleteCursor(platform.nullCursor);
+  }
   kosglDestroyContext(platform.context);
   con_exit(true);
 }
@@ -267,23 +285,25 @@ void pollEvents() {
     switch (e) {
     case EVENT_REDRAW:
       beginDraw();
-      createWindow(0, 0, 0, 0, NULL);
+      createWindow(0, 0, 0, 0, platform.fullscreen ? 0 : 3, NULL);
       endDraw();
 
       getThreadInfo(info);
 
-      wx = *(uint16*)(info+34) + BORDER;
-      wy = *(uint16*)(info+38) + platform.skinh;
-      width = *(uint16*)(info + 42);
-      height = *(uint16*)(info + 46);
+      wx = *(uint16*)(info+34) + platform.px;
+      wy = *(uint16*)(info+38) + platform.py;
+      width = *(uint16*)(info + 42)+1;
+      height = *(uint16*)(info + 46)+1;
 
       platform.wx = wx;
       platform.wy = wy;
 
-      width -= 2*BORDER - 1;
-      height -= platform.skinh + BORDER - 2;
+      if (!platform.fullscreen) {
+        width -= 2*platform.px;
+        height -= platform.py + platform.px - 1;
+      }
       if (width != platform.width || height != platform.height) {
-        kosglMakeCurrent(BORDER, platform.skinh, platform.width, platform.height, platform.context);
+        kosglMakeCurrent(platform.px, platform.py, platform.width, platform.height, platform.context);
         glViewport(0, 0, width, height);
 
         platform.width = width;
@@ -325,8 +345,8 @@ void pollEvents() {
       oy = y;
 
       getMousePos(x, y);
-      x -= BORDER;
-      y -= platform.skinh;
+      x -= platform.px;
+      y -= platform.py;
       if (x < 0 || y < 0 || x >= platform.width || y >= platform.height) {
         if (platform.mcapture) {
           centerCursor();
@@ -378,7 +398,28 @@ void platformSetCapture(bool mode) {
 }
 
 void platformToggleFullscreen() {
-  
+  platform.fullscreen ^= 1;
+  if (platform.fullscreen) {
+    
+    uint16 width, height;
+    getScreenSize(width, height);
+    platform.px = 0;
+    platform.py = 0;
+
+    char info[1024];
+    getThreadInfo(info);
+    platform.oldx = *(uint16*)(info+34);
+    platform.oldy = *(uint16*)(info+38);
+    platform.oldw = *(uint16*)(info + 42)+1;
+    platform.oldh = *(uint16*)(info + 46)+1;
+
+    resizeWindow(0, 0, width, height);
+  } else {
+    platform.px = BORDER;
+    platform.py = platform.skinh; 
+
+    resizeWindow(platform.oldx, platform.oldy, platform.oldw, platform.oldh);
+  }
 }
  
 void showCursor(bool visibility) {
@@ -479,17 +520,39 @@ void endDraw() {
   asm volatile ("int $0x40" :: "a" (12), "b" (2));
 }
 
-void createWindow(uint16 x, uint16 y, uint16 width, uint16 height, const char* title) {
+void createWindow(uint16 x, uint16 y, uint16 width, uint16 height, uint16 style, const char* title) {
   asm volatile (
     "int $0x40"
     ::"a" (0),
       "b" ((x << 16) | (width-1)),
       "c" ((y << 16) | (height-1)),
-      "d" ((1 << 28) | (3 << 24)),
+      "d" (((style==3) << 28) | (style << 24)),
       "D" (title),
       "S" (0)
     : "memory"
   );
+}
+
+void resizeWindow(uint16 x, uint16 y, uint16 width, uint16 height) {
+  asm volatile (
+    "int $0x40"
+    ::"a" (67),
+      "b" (x),
+      "c" (y),
+      "d" (width-1),
+      "S" (height-1)
+  );
+}
+
+void getScreenSize(uint16& width, uint16& height) {
+  uint32 out;
+  asm volatile (
+    "int $0x40"
+    : "=a" (out)
+    : "a" (14)
+  );
+  width = (out >> 16) + 1;
+  height = (out & 0xFFFF) + 1;
 }
 
 void getThreadInfo(char info[1024]) {
@@ -583,6 +646,13 @@ uint32 setCursor(uint32 cursor) {
     : "a" (37), "b" (5), "c" (cursor)
   );
   return old;
+}
+
+void deleteCursor(uint32 cursor) {
+  asm volatile (
+    "int $0x40"
+    :: "a" (37), "b" (6), "c" (cursor)
+  );
 }
 
 void setEventMask(uint32 mask) {
