@@ -3,6 +3,7 @@
 #include "systems/InputSystem.h"
 #include "core/Events.h"
 #include "renderer/renderer.h"
+#include "GameObject.h"
 
 bool shouldExit = false;
 
@@ -24,6 +25,7 @@ bool EngineLoop::init() {
   
   keOnQuit.subscribe(exitLoop);
   keOnKey.subscribe(keyCallback);
+
   this->gameManager.init();
 
   return 1;
@@ -54,6 +56,7 @@ bool EngineLoop::tick() {
 }
 
 void EngineLoop::exit() {
+
   this->gameManager.shutdown();
 
   Renderer::shutdown();

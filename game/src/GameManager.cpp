@@ -4,6 +4,7 @@
 #include <core/Events.h>
 #include <renderer/Model.h>
 #include <renderer/Light.h>
+#include <core/GameObject.h>
 #include GL_HEADER
 
 static Vertex vertices[] = {
@@ -57,14 +58,10 @@ void moveCallback(int16 x, int16 y);
 void wheelCallback(int8 delta);
 void resizeCallback(uint16 w, uint16 h);
 
-static Model box;
-static Model redBox;
-static Model greenBox;
-static Model blueBox;
-
-static Light redLight;
-static Light greenLight;
-static Light blueLight;
+static GameObject box;
+static GameObject redBox;
+static GameObject greenBox;
+static GameObject blueBox;
 
 static vec3 lightColor = vec3(1.0f, 0.5f, 0.31f);
 static vec3 red = vec3(1.0f, 0.0f, 0.0f);
@@ -75,10 +72,6 @@ static vec3 redPos = vec3(-.8f, .8f, .8f);
 static vec3 greenPos = vec3(.8f, .8f, .8f);
 static vec3 bluePos = vec3(0.f, -.8f, .8f);
 
-static mat4 redModel = translate(scale(mat4(1.0f), vec3(0.05f)), redPos);
-static mat4 greenModel = translate(scale(mat4(1.0f), vec3(0.05f)), greenPos);
-static mat4 blueModel = translate(scale(mat4(1.0f), vec3(0.05f)), bluePos);
-
 void GameManager::init() {
 	keOnKey.subscribe(keyCallback);
 	keOnMouseButton.subscribe(buttonCallback);
@@ -86,82 +79,66 @@ void GameManager::init() {
 	keOnMouseWheel.subscribe(wheelCallback);
 	keOnResize.subscribe(resizeCallback);
 
-  box = Model::create(vertices, sizeof(vertices)/sizeof(Vertex), "resources/textures/box256.jpg", SHADE_LIT);
+  box = GameObject::create<Model>();
+  *box.get<Model>() = Model::create(vertices, sizeof(vertices)/sizeof(Vertex), "resources/textures/box256.jpg", SHADE_LIT);
+
+  redBox = GameObject::create<Model, Light>();
+  *redBox.get<Model>() = Model::create(vertices, sizeof(vertices)/sizeof(Vertex));
+  redBox.get<Model>()->setColor(red);
   
-  redBox = Model::create(vertices, sizeof(vertices)/sizeof(Vertex));
-  greenBox = Model::create(vertices, sizeof(vertices)/sizeof(Vertex));
-  blueBox = Model::create(vertices, sizeof(vertices)/sizeof(Vertex));
+  greenBox = GameObject::create<Model, Light>();
+  *greenBox.get<Model>() = Model::create(vertices, sizeof(vertices)/sizeof(Vertex));
+  greenBox.get<Model>()->setColor(green);
   
-  redBox.setColor(red);
-  greenBox.setColor(green);
-  blueBox.setColor(blue);
+  blueBox = GameObject::create<Model, Light>();
+  *blueBox.get<Model>() = Model::create(vertices, sizeof(vertices)/sizeof(Vertex));
+  blueBox.get<Model>()->setColor(blue);
 
-  redLight.type = LIGHT_POINT;
-  redLight.setColor(red);
-  redLight.setPos(redPos);
-  redLight.setFalloff(0.1f);
-  redLight.enable();
+  redBox.get<Light>()->type = LIGHT_POINT;
+  redBox.get<Light>()->setColor(red);
+  redBox.get<Light>()->setFalloff(0.1f);
 
-  greenLight.type = LIGHT_POINT;
-  greenLight.setColor(green);
-  greenLight.setPos(greenPos);
-  greenLight.setFalloff(0.1f);
-  greenLight.enable();
+  greenBox.get<Light>()->type = LIGHT_POINT;
+  greenBox.get<Light>()->setColor(green);
+  greenBox.get<Light>()->setFalloff(0.1f);
 
-  blueLight.type = LIGHT_POINT;
-  blueLight.setColor(blue);
-  blueLight.setPos(bluePos);
-  blueLight.setFalloff(0.1f);
-  blueLight.enable();
+  blueBox.get<Light>()->type = LIGHT_POINT;
+  blueBox.get<Light>()->setColor(blue);
+  blueBox.get<Light>()->setFalloff(0.1f);
+
+  redBox.transform.position = redPos;
+  redBox.transform.size = vec3(0.05f);
+  greenBox.transform.position = greenPos;
+  greenBox.transform.size = vec3(0.05f);
+  blueBox.transform.position = bluePos;
+  blueBox.transform.size = vec3(0.05f);
 }
 
-static mat4 model;
 void GameManager::update() {
 	if (InputSystem::wasKeyDown(KEY_SPACE) != InputSystem::isKeyDown(KEY_SPACE)) {
 		KE_INFO("Space key is now %s", InputSystem::isKeyDown(KEY_SPACE) ? "down" : "up");
 	}
-  model = translate(
-		rotate(mat4(1.0f), -30.0f*Time->time, vec3(0, 0, 1.0f)),
-		vec3(0.0f, 0.5f, 0.0f)*sinf(2*Time->time)
-	);
+  box.transform.rotation = -30.0f*Time->time*vec3(0, 0, 1.0f);
+  box.transform.position = vec3(0, 0.5f, 0)*sinf(2*Time->time);
 }
 
 void GameManager::render() {
-  redLight.update();
-  greenLight.update();
-  blueLight.update();
+  redBox.onRenderBegin();
+  greenBox.onRenderBegin();
+  blueBox.onRenderBegin();
 
-  glMatrixMode(GL_MODELVIEW);
- 
-  glPushMatrix();
-  glMultMatrixf(redModel.data());
-  redBox.draw();
-  glPopMatrix();
+  redBox.onDraw();
+  greenBox.onDraw();
+  blueBox.onDraw();  
 
-  glPushMatrix();
-  glMultMatrixf(greenModel.data());
-  greenBox.draw();
-  glPopMatrix();
-
-  glPushMatrix();
-  glMultMatrixf(blueModel.data());
-  blueBox.draw();
-  glPopMatrix();
-  
-  glPushMatrix();
-	glMultMatrixf(model.data());
-	box.draw();
-  glPopMatrix();
+  box.onDraw();
 }
 
 void GameManager::shutdown() {
-  redLight.disable();
-  greenLight.disable();
-  blueLight.disable();
-	Model::destroy(box);
-  Model::destroy(redBox);
-  Model::destroy(greenBox);
-  Model::destroy(blueBox);
+  GameObject::destroy(redBox);
+  GameObject::destroy(greenBox);
+  GameObject::destroy(blueBox);
+  GameObject::destroy(box);
 }
 
 void keyCallback(uint8 key, bool down) {

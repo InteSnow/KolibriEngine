@@ -734,20 +734,24 @@ mat<4, 4, T> rotate2D(mat<4, 4, T>&& in, float a) {
 
 template<typename T>
 vec<3, T> normalize(vec<3, T>& v) {
-	return v / v.length();
+	T len = v.length();
+	return len ? v / len : vec<3, T>(0);
 }
 template<typename T>
 vec<3, T> normalize(vec<3, T>&& v) {
-	return v / v.length();
+	T len = v.length();
+	return len ? v / len : vec<3, T>(0);
 }
 
 template<typename T>
 vec<4, T> normalize(vec<4, T>& v) {
-	return v / v.length();
+	T len = v.length();
+	return len ? v / len : vec<4, T>(0);
 }
 template<typename T>
 vec<4, T> normalize(vec<4, T>&& v) {
-	return v / v.length();
+	T len = v.length();
+	return len ? v / len : vec<4, T>(0);
 }
 
 template <typename T>

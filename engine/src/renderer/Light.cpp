@@ -52,11 +52,11 @@ void Light::update() {
     glLightfv(GL_LIGHT0+this->slot, GL_POSITION, &dir.x);
   break;
   case LIGHT_POINT:
-    pos = vec4(this->point.pos, 1);
+    pos = vec4(0, 0, 0, 1);
     glLightfv(GL_LIGHT0+this->slot, GL_POSITION, &pos.x);
   break;
   case LIGHT_SPOT:
-    pos = vec4(this->spot.pos, 1);
+    pos = vec4(0, 0, 0, 1);
     glLightfv(GL_LIGHT0+this->slot, GL_POSITION, &pos.x);
     glLightfv(GL_LIGHT0+this->slot, GL_SPOT_DIRECTION, &this->spot.dir.x);
   break;
@@ -80,11 +80,6 @@ void Light::setColor(vec3 color) {
 void Light::setDir(vec3 dir) {
   this->direct.dir = dir;
   this->spot.dir = dir;
-}
-
-void Light::setPos(vec3 pos) {
-  this->point.pos = pos;
-  this->spot.pos = pos;
 }
 
 void Light::setFalloff(float falloff) {
@@ -116,10 +111,6 @@ vec3 Light::getDir() {
   return this->direct.dir;
 }
 
-vec3 Light::getPos() {
-  return this->point.pos;
-}
-
 float Light::getFalloff() {
   return this->point.falloff;
 }
@@ -130,4 +121,16 @@ float Light::getAngle() {
 
 float Light::getExponent() {
   return this->spot.exp;
+}
+
+void Light::onRegister() {
+  this->enable();
+}
+
+void Light::onRenderBegin() {
+  this->update();
+}
+
+void Light::onUnregister() {
+  this->disable();
 }

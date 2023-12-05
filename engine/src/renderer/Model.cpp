@@ -63,3 +63,11 @@ void Model::setColor(vec3 color) {
 vec3 Model::getColor() {
   return this->color;
 }
+
+void Model::onDraw() {
+  this->draw();
+}
+#include "core/logger.h"
+void Model::onUnregister() {
+  Model::destroy(*this);
+}
