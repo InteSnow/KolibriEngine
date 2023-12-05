@@ -46,6 +46,15 @@ bool EngineLoop::tick() {
   //KE_WARN("FPS = %f", 1000000.0f/(ds - start));
 
   Renderer::startFrame();
+  for (GameObject* obj : GameObject::objects) {
+    obj->onRenderBegin();
+  }
+  for (GameObject* obj : GameObject::objects) {
+    obj->onDraw();
+  }
+  for (GameObject* obj : GameObject::objects) {
+    obj->onRenderEnd();
+  }
   this->gameManager.render();
   Renderer::endFrame(); 
 
@@ -58,6 +67,11 @@ bool EngineLoop::tick() {
 void EngineLoop::exit() {
 
   this->gameManager.shutdown();
+
+  for (GameObject* obj : GameObject::objects) {
+    GameObject::destroyNoErase(obj);
+  }
+  GameObject::objects.clear();
 
   Renderer::shutdown();
 

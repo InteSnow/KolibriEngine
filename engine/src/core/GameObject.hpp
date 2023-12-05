@@ -19,10 +19,12 @@ _addAll(GameObject* obj) {
 }
 
 template <class... Ts>
-GameObject GameObject::create() {
-  GameObject obj;
-  obj.transform = Transform();
-  _addAll<0, Ts...>(&obj);
+GameObject* GameObject::create() {
+  GameObject* obj = new GameObject;
+  obj->transform = Transform();
+  _addAll<0, Ts...>(obj);
+
+  GameObject::objects.insert(obj);
   return obj;
 }
 
