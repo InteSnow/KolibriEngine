@@ -21,7 +21,21 @@ void GameObject::destroy(GameObject* obj) {
   delete obj;
 }
 
+void GameObject::makeActive() {
+  this->active = true;
+}
+
+void GameObject::makeInactive() {
+  this->active = false;
+}
+
+bool GameObject::isActive() {
+  return this->active;
+}
+
 void GameObject::onRenderBegin() {
+  if (!this->active) return;
+
   transform.push();
 
   for (KEComponent* c : this->components) {
@@ -31,6 +45,8 @@ void GameObject::onRenderBegin() {
 }
 
 void GameObject::onDraw() {
+  if (!this->active) return;
+
   transform.push();
 
   for (KEComponent* c : this->components) {
@@ -41,6 +57,8 @@ void GameObject::onDraw() {
 }
 
 void GameObject::onRenderEnd() {
+  if (!this->active) return;
+  
   transform.push();
 
   for (KEComponent* c : this->components) {

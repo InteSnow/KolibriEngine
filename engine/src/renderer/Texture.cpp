@@ -18,12 +18,12 @@ static void texFree(uint8* data) {
   stbi_image_free(data);
 }
 
-Texture Texture::create(const char* path) {
+Texture Texture::create(std::string path) {
   Texture tex = {};
 
   int32 w, h, channels;
   glActiveTexture(GL_TEXTURE0);
-  uint8* data = texLoad(path, &w, &h, &channels, STBI_rgb);
+  uint8* data = texLoad(path.c_str(), &w, &h, &channels, STBI_rgb);
   if (!data) { 
     KE_ERROR("Failed to load texture");
     return tex;

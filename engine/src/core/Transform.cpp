@@ -4,7 +4,7 @@
 Transform::Transform() : position(0.0f), size(1.0f), rotation(0.0f) {}
 
 mat4 Transform::getModel() {
-  return ::translate(::rotate(::scale(mat4(1.0f), this->size), rotation.length(), rotation), position);
+  return ::translate(::rotate(::scale(mat4(1.0f), this->size), rotation), position);
 }
 
 void Transform::move(vec3 translation) {
@@ -17,6 +17,9 @@ void Transform::scale(vec3 factor) {
 
 void Transform::rotate(vec3 rotation) {
   this->rotation = this->rotation + rotation;
+  this->rotation.x = this->rotation.x-((int)this->rotation.x/360)*360;
+  this->rotation.y = this->rotation.y-((int)this->rotation.y/360)*360;
+  this->rotation.z = this->rotation.z-((int)this->rotation.z/360)*360;
 }
 
 void Transform::push() {

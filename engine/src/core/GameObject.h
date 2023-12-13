@@ -4,6 +4,8 @@
 #include <unordered_set>
 
 class GameObject {
+  bool active = true;
+
   std::unordered_set<KEComponent*> components;
 
   static std::unordered_set<GameObject*> objects;
@@ -27,6 +29,10 @@ public:
 
   template <class T>
   void remove(void);
+
+  void makeActive(void);
+  void makeInactive(void);
+  bool isActive(void);
 
   void onRenderBegin(void);
   void onDraw(void);

@@ -38,7 +38,7 @@ bool Renderer::init(uint16 width, uint16 height) {
   glEnable(GL_NORMALIZE);
   glEnable(GL_COLOR_MATERIAL);
   glColorMaterial(GL_FRONT, GL_AMBIENT_AND_DIFFUSE);
-
+  
   camera = Camera::create(45.0f, vec3(0, 0, 3.0f));
   projection = camera->getProjection(frameWidth, frameHeight);
 
@@ -52,7 +52,7 @@ void Renderer::shutdown() {
 void Renderer::startFrame(void) {
 	mat4 view = Renderer::camera->getView();
   glMatrixMode(GL_MODELVIEW);
-  glLoadMatrixf(view.data());
+  glLoadMatrixf(view.data()); 
 
   glMatrixMode(GL_PROJECTION);
   glLoadMatrixf(projection.data());

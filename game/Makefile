@@ -25,16 +25,12 @@ default: game wgame
 
 RESOURCES = $(shell find ../engine/resources/)
 
-resources: $(RESOURCES)
-	cp -r ../engine/resources ../bin/kos32 
-	cp -r ../engine/resources ../bin/win32
-	cp -r ../bin $(TRANSFER)
-
 game: $(GAME)
 	
 $(GAME): $(TARGETS) $(ENGINE) Makefile
 	$(LD) $(LDFLAGS) $(LFLAGS) $(TARGETS) -o $(GAME) $(LIBS)
 	$(OBJCOPY) $(GAME) -O binary
+	cp -r resources ../bin/kos32
 	
 obj/kos32/%.o: src/%.c Makefile
 	@mkdir -p $(dir $@)
@@ -69,6 +65,7 @@ wgame: $(WGAME)
 
 $(WGAME): $(WTARGETS) $(WENGINE) Makefile
 	$(WCC) $(WLDFLAGS) $(WLFLAGS) $(WTARGETS) -o $(WGAME) $(WLIBS)
+	cp -r resources ../bin/win32
 	cp -r ../bin $(TRANSFER)
 
 obj/win32/%.o: src/%.c Makefile

@@ -1,8 +1,9 @@
 #pragma once
 #include "defines.h"
+#include <string>
 
 struct Texture {
-  static Texture create(const char* path);
+  static Texture create(std::string path);
 
   static void destroy(const Texture& tex);
 

@@ -820,6 +820,66 @@ mat<4, 4, T> rotate(mat<4, 4, T>&& in, float ang, vec<3, T>&& axis) {
 }
 
 template <typename T>
+mat<4, 4, T> rotate(mat<4, 4, T>& in, vec<3, T>& angles) {
+	T a = radians(angles.x), b = radians(angles.y), c = radians(angles.z);
+	T sa = sinf(a/2), ca = cosf(a/2),
+		sb = sinf(b/2), cb = cosf(b/2),
+		sc = sinf(c/2), cc = cosf(c/2);
+	vec<3, T> axis (
+		ca*sb*sc + sa*cb*cc,
+		ca*sb*cc + sa*cb*sc,
+		ca*cb*sc - sa*sb*cc
+	);
+	float angle = degrees(2*acosf(ca*cb*cc-sa*sb*sc));
+	return rotate(in, angle, axis);
+}
+
+template <typename T>
+mat<4, 4, T> rotate(mat<4, 4, T>& in, vec<3, T>&& angles) {
+	T a = radians(angles.x), b = radians(angles.y), c = radians(angles.z);
+	T sa = sinf(a/2), ca = cosf(a/2),
+		sb = sinf(b/2), cb = cosf(b/2),
+		sc = sinf(c/2), cc = cosf(c/2);
+	vec<3, T> axis (
+		ca*sb*sc + sa*cb*cc,
+		ca*sb*cc + sa*cb*sc,
+		ca*cb*sc - sa*sb*cc
+	);
+	float angle = degrees(2*acosf(ca*cb*cc-sa*sb*sc));
+	return rotate(in, angle, axis);
+}
+
+template <typename T>
+mat<4, 4, T> rotate(mat<4, 4, T>&& in, vec<3, T>& angles) {
+	T a = radians(angles.x), b = radians(angles.y), c = radians(angles.z);
+	T sa = sinf(a/2), ca = cosf(a/2),
+		sb = sinf(b/2), cb = cosf(b/2),
+		sc = sinf(c/2), cc = cosf(c/2);
+	vec<3, T> axis (
+		ca*sb*sc + sa*cb*cc,
+		ca*sb*cc + sa*cb*sc,
+		ca*cb*sc - sa*sb*cc
+	);
+	float angle = degrees(2*acosf(ca*cb*cc-sa*sb*sc));
+	return rotate(in, angle, axis);
+}
+
+template <typename T>
+mat<4, 4, T> rotate(mat<4, 4, T>&& in, vec<3, T>&& angles) {
+	T a = radians(angles.x), b = radians(angles.y), c = radians(angles.z);
+	T sa = sinf(a/2), ca = cosf(a/2),
+		sb = sinf(b/2), cb = cosf(b/2),
+		sc = sinf(c/2), cc = cosf(c/2);
+	vec<3, T> axis (
+		ca*sb*sc + sa*cb*cc,
+		ca*sb*cc + sa*cb*sc,
+		ca*cb*sc - sa*sb*cc
+	);
+	float angle = degrees(2*acosf(ca*cb*cc-sa*sb*sc));
+	return rotate(in, angle, axis);
+}
+
+template <typename T>
 mat<4, 4, T> ortho(T l, T r, T b, T t, T n, T f) {
 	return mat<4, 4, T>(
 		2 / (r-l),       0,            0,           -(r+l)/(r-l),

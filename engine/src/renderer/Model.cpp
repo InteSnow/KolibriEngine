@@ -1,73 +1,80 @@
 #include "Model.h"
+#include <string>
+
 #include GL_HEADER
 
-Model Model::create(Vertex* vertices, uint32 size, const char* diffuse, ShadingType shading) {
-  Model model;
-
-  model.vertices = vertices;
-  model.size = size;
+#define TINYOBJLOADER_IMPLEMENTATION
+#include <tiny_obj_loader.h>
+#include "core/logger.h"
+Model Model::create(const char* path, ShadingType shading) {
+  Model model = {};
   model.shading = shading;
 
-  if (diffuse) {
-    model.hasDT = 1;
-    model.diffTex = Texture::create(diffuse);
-  } else {
-    model.hasDT = 0;
-  }
-  
-  model.color = vec3(1.0f);
+  std::vector<Vertex> vertices;
 
+  tinyobj::attrib_t attrib;
+  std::vector<tinyobj::shape_t> shapes;
+  std::vector<tinyobj::material_t> materials;
+  tinyobj::LoadObj(&attrib, &shapes, &materials, NULL, NULL, path, "resources/models");
+
+  for (uint32 i = 0; i < shapes.size(); i++) {
+    vertices.clear();
+    for (const auto& index : shapes[i].mesh.indices) {
+      Vertex v = {};
+
+      v.pos = {
+        attrib.vertices[3*index.vertex_index+0],
+        attrib.vertices[3*index.vertex_index+1],
+        -attrib.vertices[3*index.vertex_index+2],
+      };
+
+      v.texCoords = {
+        attrib.texcoords[2*index.texcoord_index+0],
+        1.0f - attrib.texcoords[2*index.texcoord_index+1]
+      };
+
+      v.normal = {
+        attrib.normals[3*index.normal_index+0],
+        attrib.normals[3*index.normal_index+1],
+        -attrib.normals[3*index.normal_index+2],
+      };
+
+      if (shapes[i].mesh.material_ids.size() >= attrib.vertices.size()/3) {
+        v.color = {
+          materials[shapes[i].mesh.material_ids[index.vertex_index/3]].diffuse[0],
+          materials[shapes[i].mesh.material_ids[index.vertex_index/3]].diffuse[1],
+          materials[shapes[i].mesh.material_ids[index.vertex_index/3]].diffuse[2],
+        };
+      } else {
+        v.color = vec3(1.0f);
+      }
+      vertices.push_back(v);
+    }
+    std::string diff = std::string("resources/textures/") + materials[shapes[i].mesh.material_ids[0]].diffuse_texname;
+    model.meshes.push_back(Mesh::create(std::move(vertices), diff));
+  }
   return model;
 }
-void Model::draw(void) {
-  if (!this->vertices) return;
 
+void Model::destroy(Model& model) {
+  for (Mesh& mesh : model.meshes) {
+    Mesh::destroy(mesh);
+  }
+  model.meshes.clear();
+}
+
+void Model::onDraw() {
   if (this->shading == SHADE_LIT) {
     glEnable(GL_LIGHTING);
   } else {
     glDisable(GL_LIGHTING);
   }
 
-  if (this->hasDT) {
-    glEnable(GL_TEXTURE_2D);
-    this->diffTex.bind(0);
-  } else {
-    glDisable(GL_TEXTURE_2D);
-  }
-
-  vec3 color;
-  glBegin(GL_TRIANGLES);
-  for (uint32 i = 0; i < this->size; i++) {
-    color = this->color * this->vertices[i].color;
-    glNormal3fv(&this->vertices[i].normal.x);
-    glColor3fv(&color.x);
-    glTexCoord2fv(&this->vertices[i].texCoords.x);
-    glVertex3fv(&this->vertices[i].pos.x);
-  }
-  glEnd();
-
-  if (this->hasDT) {
-    this->diffTex.unbind();
+  for (Mesh& mesh : this->meshes) {
+    mesh.draw();
   }
 }
 
-void Model::destroy(Model& model) {
-  if (model.hasDT) {
-    Texture::destroy(model.diffTex);
-  }
-}
-
-void Model::setColor(vec3 color) {
-  this->color = clamp(color, vec3(0.0f), vec3(1.0f));
-}
-vec3 Model::getColor() {
-  return this->color;
-}
-
-void Model::onDraw() {
-  this->draw();
-}
-#include "core/logger.h"
 void Model::onUnregister() {
   Model::destroy(*this);
 }
