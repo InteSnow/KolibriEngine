@@ -897,8 +897,8 @@ mat<4, 4, T> perspective(T fov, T ratio, T n, T f) {
 	return mat<4, 4, T>(
 		1 / r, 0,     	0,                  0,
 		0,     1 / t, 	0,                  0,
-		0,     0,    		f / (f - n),  			-f * n / (f - n),
-		0,     0,    		1,                 0
+		0,     0,    		(f+n) / (f - n),		-2 * f * n / (f - n),
+		0,     0,    		1,                 	0
 		);
 }
 

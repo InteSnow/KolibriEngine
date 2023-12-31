@@ -84,6 +84,7 @@ typedef struct {
     unsigned char *dctable;
     int *ctable;
     PIXEL *current_textures[32];
+    int blend;
 } ZBuffer;
 
 typedef struct {

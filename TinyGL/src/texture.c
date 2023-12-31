@@ -144,17 +144,17 @@ void glopTexImage2D(GLContext *c,GLParam *p)
   unsigned char *pixels1;
   int do_free;
 
-  if (!(target == GL_TEXTURE_2D && level == 0 && components == 3 && 
-        border == 0 && format == GL_RGB &&
+  if (!(target == GL_TEXTURE_2D && level == 0 && (components == 3 || components == 1) && 
+        border == 0 && (format == GL_RGB || format == GL_ALPHA) &&
         type == GL_UNSIGNED_BYTE)) {
     gl_fatal_error("glTexImage2D: combinaison of parameters not handled");
   }
   
   do_free=0;
   if (width != 256 || height != 256) {
-    pixels1 = gl_malloc(256 * 256 * 3);
+    pixels1 = gl_malloc(256 * 256 * components);
     /* no interpolation is done here to respect the original image aliasing ! */
-    gl_resizeImageNoInterpolate(pixels1,256,256,pixels,width,height);
+    gl_resizeImageNoInterpolate(pixels1,256,256,pixels,width,height,components);
     do_free=1;
     width=256;
     height=256;
@@ -173,9 +173,9 @@ void glopTexImage2D(GLContext *c,GLParam *p)
           memcpy(im->pixmap,pixels1,width*height*3);
       } else {
           for (int i = 0; i < width*height*3; i+=3) {
-              ((unsigned char*)im->pixmap)[i] = pixels1[i+2];
-              ((unsigned char*)im->pixmap)[i+1] = pixels1[i+1];
-              ((unsigned char*)im->pixmap)[i+2] = pixels1[i];
+              ((unsigned char*)im->pixmap)[i] = pixels1[i/3];
+              ((unsigned char*)im->pixmap)[i+1] = pixels1[i/3];
+              ((unsigned char*)im->pixmap)[i+2] = pixels1[i/3];
           }
       }
   }

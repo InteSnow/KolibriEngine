@@ -103,7 +103,7 @@ void gl_resizeImage(unsigned char *dest,int xsize_dest,int ysize_dest,
 /* resizing with no interlating nor nearest pixel */
 
 void gl_resizeImageNoInterpolate(unsigned char *dest,int xsize_dest,int ysize_dest,
-                                 unsigned char *src,int xsize_src,int ysize_src)
+                                 unsigned char *src,int xsize_src,int ysize_src, int components)
 {
   unsigned char *pix,*pix_src,*pix1;
   int x1,y1,x1inc,y1inc;
@@ -121,13 +121,13 @@ void gl_resizeImageNoInterpolate(unsigned char *dest,int xsize_dest,int ysize_de
     for(x=0;x<xsize_dest;x++) {
       xi=x1 >> FRAC_BITS;
       yi=y1 >> FRAC_BITS;
-      pix1=pix_src+(yi*xsize_src+xi)*3;
+      pix1=pix_src+(yi*xsize_src+xi)*components;
 
-      pix[0]=pix1[0];
-      pix[1]=pix1[1];
-      pix[2]=pix1[2];
+      for (int i = 0; i < components; i++) {
+        pix[i]=pix1[i];
+      }
 
-      pix+=3;
+      pix+=components;
       x1+=x1inc;
     }
     y1+=y1inc;

@@ -6,7 +6,11 @@
 #include <renderer/Light.h>
 #include <core/GameObject.h>
 #include GL_HEADER
+#include <GL/glu.h>
 #include <vector>
+#define STB_TRUETYPE_IMPLEMENTATION
+#include <stb/stb_truetype.h>
+#include <core/File.h>
 
 std::vector<Vertex> vertices = {};
 
@@ -20,6 +24,9 @@ static GameObject* model1;
 static GameObject* model2;
 static GameObject* model3;
 static GameObject* sun;
+
+static Texture bitmapTex;
+static stbtt_bakedchar cdata[96];
 
 void GameManager::init() {
 	keOnKey.subscribe(keyCallback);
@@ -47,6 +54,20 @@ void GameManager::init() {
   sun->get<Light>()->type = LIGHT_DIRECT;
   sun->get<Light>()->setColor(vec3(0.99f, 0.98f, 0.83f));
   sun->get<Light>()->setDir(vec3(-1.0f, -1.0f, -1.0f));
+
+  std::string fontBuffer;
+
+  File font = File::open("resources/fonts/arial.ttf", FILE_READ | FILE_BINARY);
+  font.readAll(fontBuffer);
+  File::close(font);
+  stbtt_fontinfo fontinfo;
+
+  int b_w = 256, b_h = 256, l_h = 32;
+  uint8* bitmap = (uint8*)malloc(b_w*b_h);
+  stbtt_BakeFontBitmap((const uint8*)fontBuffer.c_str(), 0, l_h, bitmap, b_w, b_h, 32, 96, cdata);
+
+  bitmapTex = Texture::create(bitmap, b_w, b_h, 1);
+  free(bitmap);
 }
 
 void GameManager::update() {
@@ -59,7 +80,19 @@ void GameManager::update() {
 }
 
 void GameManager::render() {
+  bitmapTex.bind(0);
+  glBegin(GL_QUADS);
 
+  float x = 100, y = 100;
+  stbtt_aligned_quad q;
+  stbtt_GetBakedQuad(cdata, 256, 256, 'A'-32, &x, &y, &q, 1);
+  glTexCoord2f(q.s0, q.t0); glColor3f(1.0f, 1.0f, 1.0f); glVertex2f(q.x0, q.y0);
+  glTexCoord2f(q.s1, q.t0); glColor3f(1.0f, 1.0f, 1.0f); glVertex2f(q.x1, q.y0);
+  glTexCoord2f(q.s1, q.t1); glColor3f(1.0f, 1.0f, 1.0f); glVertex2f(q.x1, q.y1);
+  glTexCoord2f(q.s0, q.t1); glColor3f(1.0f, 1.0f, 1.0f); glVertex2f(q.x0, q.y1);
+
+  glEnd();
+  bitmapTex.unbind();
 }
 
 void GameManager::shutdown() {

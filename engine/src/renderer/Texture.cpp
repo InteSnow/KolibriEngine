@@ -29,19 +29,33 @@ Texture Texture::create(std::string path) {
     return tex;
   }
 
-	glGenTextures(1, &tex.handle);
+  tex = Texture::create(data, w, h, 3);
+
+  texFree(data);
+
+  return tex;
+}
+
+Texture Texture::create(uint8* bitmap, int w, int h, int channels) {
+  Texture tex;
+  GLenum format = channels == 3 ? GL_RGB : GL_ALPHA;
+  GLint components;
+  #ifdef KE_PLATFORM_WIN32
+  components = format;
+  #else
+  components = channels;
+  #endif
+  glGenTextures(1, &tex.handle);
 
   tex.bind(0);
   
-  glTexImage2D(GL_TEXTURE_2D, 0, 3, w, h, 0, GL_RGB, GL_UNSIGNED_BYTE, data);
+  glTexImage2D(GL_TEXTURE_2D, 0, components, w, h, 0, format, GL_UNSIGNED_BYTE, bitmap);
   glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
   glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
   glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
   glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
 
   tex.unbind();
-
-  texFree(data);
 
   return tex;
 }

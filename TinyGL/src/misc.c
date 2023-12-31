@@ -48,6 +48,9 @@ void glopEnableDisable(GLContext *c,GLParam *p)
   int v=p[2].i;
 
   switch(code) {
+  case GL_BLEND:
+    c->zb->blend=v;
+    break;
   case GL_CULL_FACE:
     c->cull_face_enabled=v;
     break;

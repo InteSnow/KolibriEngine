@@ -64,6 +64,25 @@ void Renderer::endFrame() {
 	glFlush();
 }
 
+void Renderer::startInterface() {
+  glDisable(GL_DEPTH_TEST);
+  glDisable(GL_LIGHTING);
+  glEnable(GL_BLEND);
+  glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+  glEnable(GL_TEXTURE_2D);
+
+  glMatrixMode(GL_MODELVIEW);
+  glLoadIdentity();
+  glMatrixMode(GL_PROJECTION);
+  mat4 m = ortho(0.f, (float)frameWidth, 0.f, (float)frameHeight, 0.1f, 100.0f);
+  glLoadMatrixf(m.data());
+}
+
+void Renderer::endInterface() {
+  glEnable(GL_DEPTH_TEST);
+  glDisable(GL_BLEND);
+}
+
 void Renderer::onResize(uint16 width, uint16 height) {
   frameWidth = width;
   frameHeight = height;

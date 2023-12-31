@@ -4,6 +4,7 @@
 
 struct Texture {
   static Texture create(std::string path);
+  static Texture create(uint8* bitmap, int w, int h, int channels);
 
   static void destroy(const Texture& tex);
 

@@ -268,9 +268,15 @@ void ZB_fillTriangleMappingPerspective(ZBuffer *zb,
    zz=z >> ZB_POINT_Z_FRAC_BITS;		\
      if (ZCMP(zz,pz[_a])) {				\
        dptr = diffuse + (((t & 0x3FC00000) | (s & 0x003FC000)) >> 14) * 3;\
-       pp[3 * _a + 0]= dptr[2]*(ob1 >> 8)/255;\
-       pp[3 * _a + 1]= dptr[1]*(og1 >> 8)/255;\
-       pp[3 * _a + 2]= dptr[0]*(or1 >> 8)/255;\
+       if (zb->blend) {\
+         pp[3 * _a + 0]= dptr[0]*dptr[2]*(ob1 >> 8)/255/255 + (255-dptr[0])*pp[3*_a+0]/255;\
+         pp[3 * _a + 1]= dptr[0]*dptr[1]*(og1 >> 8)/255/255 + (255-dptr[0])*pp[3*_a+1]/255;\
+         pp[3 * _a + 2]= dptr[0]*dptr[0]*(or1 >> 8)/255/255 + (255-dptr[0])*pp[3*_a+2]/255;\
+       } else {\
+         pp[3 * _a + 0]= dptr[2]*(ob1 >> 8)/255;\
+         pp[3 * _a + 1]= dptr[1]*(og1 >> 8)/255;\
+         pp[3 * _a + 2]= dptr[0]*(or1 >> 8)/255;\
+       }\
        pz[_a]=zz;				\
     }						\
     z+=dzdx;					\

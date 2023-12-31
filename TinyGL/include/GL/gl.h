@@ -839,7 +839,7 @@ void glTexCoordPointer(GLint size, GLenum type, GLsizei stride,
 
 /* opengl 1.2 polygon offset */
 void glPolygonOffset(GLfloat factor, GLfloat units);
-
+void glBlendFunc(GLenum sfactor, GLenum dfactor);
 /* not implemented, just added to compile  */
   /*
 inline void glPointSize(float) {}

@@ -188,6 +188,9 @@ void glPolygonMode(int face,int mode)
   gl_add_op(p);
 }
 
+void glBlendFunc(GLenum sfactor, GLenum dfactor) {
+
+}
 
 /* glEnable / glDisable */
 
