@@ -6,6 +6,23 @@
 #include <math.h>
 #include "zmath.h"
 
+long long gl_Clamp(long long val, long long low, long long high) {
+	if (val < low) val = low;
+	if (val > high) val = high;
+	return val;
+}
+
+float gl_Max(float a, float b) {
+	return a > b ? a : b;
+}
+
+float gl_V2_Len(float x, float y) {
+	return sqrtf(x*x + y*y);
+}
+
+float gl_Abs(float a) {
+	return a < 0 ? -a : a;
+}
 
 /* ******* Gestion des matrices 4x4 ****** */
 
@@ -140,7 +157,7 @@ int Matrix_Inv(float *r,float *m,int n)
 	 int i,j,k,l;
 	 float max,tmp,t;
 
-	 /* identitée dans r */
+	 /* identitï¿½e dans r */
 	 for(i=0;i<n*n;i++) r[i]=0;
 	 for(i=0;i<n;i++) r[i*n+i]=1;
 	 

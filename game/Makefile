@@ -17,7 +17,7 @@ IFLAGS = -I$(KOLIBRI_SDK)/sources/newlib/libc/include -I$(KOLIBRI_SDK)/sources/l
 SCRIPT = app.lds
 LDFLAGS = -static -nostdlib -T$(SCRIPT) --image-base 0 
 LFLAGS = -L$(MSYS)/home/autobuild/tools/win32/mingw32/lib -L../bin/kos32
-LIBS = -lkoengine -lTinyGL -lGL.dll -lglsl -lstdc++ -lsupc++ -lgcc -lc.dll 
+LIBS = -lkoengine -lfreetype -lTinyGL -lGL.dll -lglsl -lstdc++ -lsupc++ -lgcc -lc.dll 
 
 TRANSFER = F:/
 
@@ -59,7 +59,7 @@ WCFLAGS = -std=c++11 -c -O2 -D_DEBUG
 WIFLAGS = -I../engine/src -ID:/source/kolibriw
 WLDFLAGS = -static -static-libgcc -static-libstdc++
 WLFLAGS = -L../bin/win32
-WLIBS = -lkoengine -lglew32 -lgdi32 -lopengl32
+WLIBS = -lkoengine -lfreetype -lglew32 -lgdi32 -lopengl32
 
 wgame: $(WGAME)
 

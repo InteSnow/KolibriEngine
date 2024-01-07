@@ -31,7 +31,11 @@ typedef struct {
 typedef struct {
 	 float v[4];
 } V4;
-	
+
+long long gl_Clamp(long long val, long long low, long long high);
+float gl_Max(float a, float b);
+float gl_V2_Len(float x, float y);
+float gl_Abs(float a);
 void gl_M4_Id(M4 *a);
 int gl_M4_IsId(M4 *a);
 void gl_M4_Move(M4 *a,M4 *b);

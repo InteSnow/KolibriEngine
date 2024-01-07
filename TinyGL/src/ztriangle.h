@@ -109,7 +109,7 @@
   {
     float zz;
     zz=(float) p0->z;
-    p0->sz= (float) p0->s * zz;
+    p0->sz= (float) p0->s * zz; 
     p0->tz= (float) p0->t * zz;
     zz=(float) p1->z;
     p1->sz= (float) p1->s * zz;

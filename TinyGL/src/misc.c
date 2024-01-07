@@ -68,6 +68,7 @@ void glopEnableDisable(GLContext *c,GLParam *p)
     break;
   case GL_DEPTH_TEST:
     c->depth_test = v;
+    c->zb->depthTest = v;
     break;
   case GL_POLYGON_OFFSET_FILL:
     if (v) c->offset_states |= TGL_OFFSET_FILL;
@@ -90,6 +91,27 @@ void glopEnableDisable(GLContext *c,GLParam *p)
       */
     }
     break;
+  }
+}
+
+void glopSetFragShader(GLContext *c,GLParam *p) {
+  int i = p[1].i;
+  c->zb->fragmentShader = i;
+}
+
+void glopSetUniform(GLContext *c, GLParam *p) {
+  int var = p[1].i;
+  float val = p[2].f;
+  switch (var) {
+  case 0:
+    c->zb->quadW = val;
+  break;
+  case 1:
+    c->zb->quadH = val;
+  break;
+  case 2:
+    c->zb->radius = val;
+  break;  
   }
 }
 

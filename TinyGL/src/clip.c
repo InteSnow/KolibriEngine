@@ -38,13 +38,28 @@ void gl_transform_to_viewport(GLContext *c,GLVertex *v)
   }
   
   /* texture */
-
   if (c->texture_2d_enabled) {
-    v->zp.s=(int)(v->tex_coord.X * (ZB_POINT_S_MAX - ZB_POINT_S_MIN) 
-                  + ZB_POINT_S_MIN);
-    v->zp.t=(int)(v->tex_coord.Y * (ZB_POINT_T_MAX - ZB_POINT_T_MIN) 
-                  + ZB_POINT_T_MIN);
-  }
+    // v->zp.s=(int)(v->tex_coord.X * (ZB_POINT_S_MAX - ZB_POINT_S_MIN) 
+    //               + ZB_POINT_S_MIN);
+    // v->zp.t=(int)(v->tex_coord.Y * (ZB_POINT_T_MAX - ZB_POINT_T_MIN) 
+    //               + ZB_POINT_T_MIN);
+    if (c->zb->fragmentShader == 2) {
+    c->zb->texW = c->zb->quadW;
+    c->zb->texH = c->zb->quadH;
+    v->zp.s = (int)(v->tex_coord.X * ((c->zb->texW-1) << 16));
+    v->zp.t = (int)(v->tex_coord.Y * ((c->zb->texH-1) << 16));  
+    } else if (c->current_textures[0]->images[0].xsize) {
+    c->zb->texW = c->current_textures[0]->images[0].xsize;
+    c->zb->texH = c->current_textures[0]->images[0].ysize;
+    v->zp.s = (int)(v->tex_coord.X * ((c->current_textures[0]->images[0].xsize-1) << 16));
+    v->zp.t = (int)(v->tex_coord.Y * ((c->current_textures[0]->images[0].ysize-1) << 16));         
+    } else {
+    c->zb->texW = c->current_textures[0]->alphaMaps[0].xsize;
+    c->zb->texH = c->current_textures[0]->alphaMaps[0].ysize;
+    v->zp.s = (int)(v->tex_coord.X * ((c->current_textures[0]->alphaMaps[0].xsize-1) << 16));
+    v->zp.t = (int)(v->tex_coord.Y * ((c->current_textures[0]->alphaMaps[0].ysize-1) << 16));  
+    }
+  } 
 }
 
 
@@ -411,8 +426,9 @@ void gl_draw_triangle_fill(GLContext *c,
 #ifdef PROFILE
     count_triangles_textured++;
 #endif
+ 
     for (int i=0;i<32;i++) {
-      ZB_setTexture(c->zb,c->current_textures[i]->images[0].pixmap, i);
+      ZB_setTexture(c->zb,c->current_textures[i]->images[0].pixmap, c->current_textures[i]->alphaMaps[0].pixmap, i); 
     }
     ZB_fillTriangleMappingPerspective(c->zb,&p0->zp,&p1->zp,&p2->zp);
   } else if (c->current_shade_model == GL_SMOOTH) {

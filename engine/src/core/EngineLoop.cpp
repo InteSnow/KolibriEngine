@@ -55,9 +55,10 @@ bool EngineLoop::tick() {
   for (GameObject* obj : GameObject::objects) {
     obj->onRenderEnd();
   }
-  Renderer::startInterface();
+  Renderer::startGUI();
+  Renderer::startText();
   this->gameManager.render();
-  Renderer::endInterface();
+  Renderer::endGUI();
   Renderer::endFrame(); 
 
   platformPresent();

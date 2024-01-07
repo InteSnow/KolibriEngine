@@ -56,12 +56,12 @@ void glColor4f(float r,float g,float b,float a)
   GLParam p[8];
 
   p[0].op=OP_Color;
-  p[1].f=b;
+  p[1].f=r;
   p[2].f=g;
-  p[3].f=r;
+  p[3].f=b;
   p[4].f=a;
   /* direct convertion to integer to go faster if no shading */
-  RGBFtoRGBI(r,g,b,p[7].ui,p[6].ui,p[5].ui);                      
+  RGBFtoRGBI(r,g,b,p[5].ui,p[6].ui,p[7].ui);                      
   gl_add_op(p); 
 }
 
@@ -70,16 +70,16 @@ void glColor4fv(float *v)
   GLParam p[8];
 
   p[0].op=OP_Color;
-  p[1].f=v[2];
+  p[1].f=v[0];
   p[2].f=v[1];
-  p[3].f=v[0];
+  p[3].f=v[2];
   p[4].f=v[3];
   /* direct convertion to integer to go faster if no shading */
-  p[5].ui = (unsigned int) (v[2] * (ZB_POINT_RED_MAX - ZB_POINT_RED_MIN) + 
+  p[5].ui = (unsigned int) (v[0] * (ZB_POINT_RED_MAX - ZB_POINT_RED_MIN) + 
                             ZB_POINT_RED_MIN);
   p[6].ui = (unsigned int) (v[1] * (ZB_POINT_GREEN_MAX - ZB_POINT_GREEN_MIN) + 
                             ZB_POINT_GREEN_MIN);
-  p[7].ui = (unsigned int) (v[0] * (ZB_POINT_BLUE_MAX - ZB_POINT_BLUE_MIN) + 
+  p[7].ui = (unsigned int) (v[2] * (ZB_POINT_BLUE_MAX - ZB_POINT_BLUE_MIN) + 
                             ZB_POINT_BLUE_MIN);
   gl_add_op(p);
 }
@@ -190,6 +190,21 @@ void glPolygonMode(int face,int mode)
 
 void glBlendFunc(GLenum sfactor, GLenum dfactor) {
 
+}
+
+void glSetFragShader(GLenum shader) {
+  GLParam p[2];
+  p[0].op = OP_SetFragShader;
+  p[1].i = shader;
+  gl_add_op(p);
+}
+
+void glSetUniform(GLenum var, float value) {
+  GLParam p[3];
+  p[0].op = OP_SetUniform;
+  p[1].i = var;
+  p[2].f = value;
+  gl_add_op(p);
 }
 
 /* glEnable / glDisable */

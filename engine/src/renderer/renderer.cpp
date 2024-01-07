@@ -13,6 +13,11 @@ uint16 Renderer::frameWidth;
 uint16 Renderer::frameHeight;
 Camera* Renderer::camera;
 
+#ifdef KE_PLATFORM_WIN32
+uint32 guiShader;
+#include "core/File.h"
+#endif
+
 bool Renderer::init(uint16 width, uint16 height) {
   frameWidth = width;
   frameHeight = height;
@@ -30,6 +35,7 @@ bool Renderer::init(uint16 width, uint16 height) {
 #ifdef KE_PLATFORM_WIN32
   glTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_MODULATE);
 #endif
+  glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
 
   glHint(GL_PERSPECTIVE_CORRECTION_HINT, GL_FASTEST);
   glEnable(GL_TEXTURE_2D);
@@ -42,10 +48,48 @@ bool Renderer::init(uint16 width, uint16 height) {
   camera = Camera::create(45.0f, vec3(0, 0, 3.0f));
   projection = camera->getProjection(frameWidth, frameHeight);
 
+#ifdef KE_PLATFORM_WIN32
+  uint32 vertex = glCreateShader(GL_VERTEX_SHADER);
+  File vertexFile = File::open("resources/shaders/gui.vert", FILE_READ);
+  std::string vertexString;
+  vertexFile.readAll(vertexString);
+  File::close(vertexFile);
+  const char* vertexSource = vertexString.c_str();
+  glShaderSource(vertex, 1, &vertexSource, NULL);
+  glCompileShader(vertex);
+
+  uint32 fragment = glCreateShader(GL_FRAGMENT_SHADER);
+  File fragmentFile = File::open("resources/shaders/gui.frag", FILE_READ);
+  std::string fragmentString;
+  fragmentFile.readAll(fragmentString);
+  const char* fragmentSource = fragmentString.c_str();
+  glShaderSource(fragment, 1, &fragmentSource, NULL);
+  glCompileShader(fragment);
+
+  guiShader = glCreateProgram();
+  glAttachShader(guiShader, vertex);
+  glAttachShader(guiShader, fragment);
+  glLinkProgram(guiShader);
+
+  int32 success;
+  char infoLog[512];
+  glGetProgramiv(guiShader, GL_LINK_STATUS, &success);
+  if(!success) {
+    glGetProgramInfoLog(guiShader, 512, NULL, infoLog);
+    KE_INFO("Shader program linking failed: %s", infoLog);
+  }
+
+  glDeleteShader(vertex);
+  glDeleteShader(fragment);
+#endif
+
   return 1;
 }
 
 void Renderer::shutdown() {
+#ifdef KE_PLATFORM_WIN32
+  glDeleteProgram(guiShader);
+#endif
   Camera::destroy(Renderer::camera);
 }
 
@@ -64,7 +108,19 @@ void Renderer::endFrame() {
 	glFlush();
 }
 
-void Renderer::startInterface() {
+void Renderer::startGUI() {
+  float32 width = 150, height = 150, radius = 75;
+#ifdef KE_PLATFORM_WIN32
+  glUseProgram(guiShader);
+  glUniform2f(glGetUniformLocation(guiShader, "dimensions"), width, height);
+  glUniform1f(glGetUniformLocation(guiShader, "radius"), radius);
+#else
+  glSetFragShader(GL_FRAG_QUADS);
+  glSetUniform(GL_QUAD_WIDTH, width);
+  glSetUniform(GL_QUAD_HEIGHT, height);
+  glSetUniform(GL_RADIUS, radius);
+#endif
+
   glDisable(GL_DEPTH_TEST);
   glDisable(GL_LIGHTING);
   glEnable(GL_BLEND);
@@ -74,13 +130,31 @@ void Renderer::startInterface() {
   glMatrixMode(GL_MODELVIEW);
   glLoadIdentity();
   glMatrixMode(GL_PROJECTION);
-  mat4 m = ortho(0.f, (float)frameWidth, 0.f, (float)frameHeight, 0.1f, 100.0f);
+  mat4 m = ortho(0.f, (float)frameWidth, 0.f, (float)frameHeight);
   glLoadMatrixf(m.data());
+
+  glBegin(GL_QUADS);
+  glTexCoord2f(0.0f, 0.0f); glColor3f(.0f, .0f, 1.0f); glVertex2f(200-width/2.f, 200+height/2.f);
+  glTexCoord2f(1.0f, 0.0f); glColor3f(.0f, .0f, 1.0f); glVertex2f(200+width/2.f, 200+height/2.f);
+  glTexCoord2f(1.0f, 1.0f); glColor3f(.0f, .0f, 1.0f); glVertex2f(200+width/2.f, 200-height/2.f);
+  glTexCoord2f(0.0f, 1.0f); glColor3f(.0f, .0f, 1.0f); glVertex2f(200-width/2.f, 200-height/2.f);
+  glEnd();
 }
 
-void Renderer::endInterface() {
+void Renderer::endGUI() {
+#ifdef KE_PLATFORM_KOS32
+  glSetFragShader(GL_FRAG_DEFAULT);
+#endif
   glEnable(GL_DEPTH_TEST);
   glDisable(GL_BLEND);
+}
+
+void Renderer::startText() {
+#ifdef KE_PLATFORM_WIN32
+  glUseProgram(0);
+#else
+  glSetFragShader(GL_FRAG_TEXT);
+#endif
 }
 
 void Renderer::onResize(uint16 width, uint16 height) {

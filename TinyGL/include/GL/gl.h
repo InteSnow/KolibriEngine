@@ -690,6 +690,18 @@ enum {
 	GL_ALL_ATTRIB_BITS	= 0x000fffff
 };
 
+enum {
+	GL_FRAG_DEFAULT = 0,
+	GL_FRAG_TEXT = 1,
+	GL_FRAG_QUADS = 2
+};
+
+enum {
+	GL_QUAD_WIDTH = 0,
+	GL_QUAD_HEIGHT = 1,
+	GL_RADIUS = 2
+};
+
 /* some types */
 
 typedef int		GLenum;
@@ -709,6 +721,9 @@ typedef int GLsizei;
 
 void glEnable(int code);
 void glDisable(int code);
+
+void glSetFragShader(GLenum shader);
+void glSetUniform(GLenum var, float value);
 
 void glShadeModel(int mode);
 void glCullFace(int mode);

@@ -181,10 +181,6 @@ LRESULT procWinInput(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam) {
   if (platform.fchanged && platform.mstate) {
     platformSetCapture(true);
     platform.fchanged = false;
-  } else if (platform.unfocused) {
-    if (platform.mcapture) {
-      centerCursor();
-    }
   }
 
   switch (uMsg) {
@@ -234,7 +230,8 @@ LRESULT procWinInput(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam) {
       return 0;
 
     case WM_MOUSEMOVE:
-      if (GetFocus() != platform.hWnd) {
+      
+      if (GetForegroundWindow() != platform.hWnd) {
         if (!platform.unfocused && platform.mcapture) {
           InputSystem::processMouse(0, 0);
         }

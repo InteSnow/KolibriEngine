@@ -880,12 +880,12 @@ mat<4, 4, T> rotate(mat<4, 4, T>&& in, vec<3, T>&& angles) {
 }
 
 template <typename T>
-mat<4, 4, T> ortho(T l, T r, T b, T t, T n, T f) {
+mat<4, 4, T> ortho(T l, T r, T b, T t) {
 	return mat<4, 4, T>(
-		2 / (r-l),       0,            0,           -(r+l)/(r-l),
-		0,           -2 / (t-b),        0,           (t+b)/(t-b),
-		0,           0,           -1 / (f - n),  		-n/(f-n),
-		0,           0,            0,            1
+		2 / (r-l),    0,            0,           -(r+l)/(r-l),
+		0,            2 / (t-b),    0,           -(t+b)/(t-b),
+		0,            0,           -1, 						0,
+		0,            0,            0,            1
 		);
 }
 

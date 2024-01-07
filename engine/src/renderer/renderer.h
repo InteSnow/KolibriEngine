@@ -16,8 +16,9 @@ public:
   static void startFrame(void);
   static void endFrame(void);
 
-  static void startInterface(void);
-  static void endInterface(void);
+  static void startGUI(void);
+  static void endGUI(void);
+  static void startText(void);
 
   static void onResize(uint16 width, uint16 height);
   static void onKey(uint8 key, bool down);

@@ -143,6 +143,7 @@ typedef struct GLImage {
 
 typedef struct GLTexture {
   GLImage images[MAX_TEXTURE_LEVELS];
+  GLImage alphaMaps[MAX_TEXTURE_LEVELS];
   int handle;
   struct GLTexture *next,*prev;
 } GLTexture;

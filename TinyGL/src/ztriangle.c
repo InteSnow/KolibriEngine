@@ -1,5 +1,6 @@
 #include <stdlib.h>
 #include "zbuffer.h"
+#include "zmath.h"
 
 #define ZCMP(z,zpix) ((z) >= (zpix))
 
@@ -171,9 +172,10 @@ void ZB_fillTriangleSmooth(ZBuffer *zb,
 #include "ztriangle.h"
 }
 
-void ZB_setTexture(ZBuffer *zb,PIXEL *texture, int slot)
+void ZB_setTexture(ZBuffer *zb,PIXEL *texture, PIXEL *alpha, int slot)
 {
     zb->current_textures[slot]=texture;
+    zb->alphaMaps[slot]=alpha;
 }
 
 void ZB_fillTriangleMapping(ZBuffer *zb,
@@ -236,11 +238,11 @@ void ZB_fillTriangleMapping(ZBuffer *zb,
 static void shader() {
 
 }
-
+#include <stdio.h>
 void ZB_fillTriangleMappingPerspective(ZBuffer *zb,
                             ZBufferPoint *p0,ZBufferPoint *p1,ZBufferPoint *p2)
 {
-    PIXEL *diffuse, *specular;
+    PIXEL *diffuse, *alpha;
     float fdzdx,fndzdx,ndszdx,ndtzdx;
 
 #define INTERP_Z
@@ -253,6 +255,7 @@ void ZB_fillTriangleMappingPerspective(ZBuffer *zb,
 #define DRAW_INIT()				\
 {						\
   diffuse=zb->current_textures[0];\
+  alpha=zb->alphaMaps[0];\
   fdzdx=(float)dzdx;\
   fndzdx=NB_INTERP * fdzdx;\
   ndszdx=NB_INTERP * dszdx;\
@@ -261,30 +264,51 @@ void ZB_fillTriangleMappingPerspective(ZBuffer *zb,
 
 
 #if TGL_FEATURE_RENDER_BITS == 24
-
+      //  dptr = diffuse + (((t & 0x3FC00000) | (s & 0x003FC000)) >> 14) * 3;\
+      //  a = alpha[((t & 0x3FC00000) | (s & 0x003FC000)) >> 14];
+//0xFA73
 #define PUT_PIXEL(_a)				\
 {						\
-   unsigned char *dptr, *sptr;\
-   zz=z >> ZB_POINT_Z_FRAC_BITS;		\
-     if (ZCMP(zz,pz[_a])) {				\
-       dptr = diffuse + (((t & 0x3FC00000) | (s & 0x003FC000)) >> 14) * 3;\
-       if (zb->blend) {\
-         pp[3 * _a + 0]= dptr[0]*dptr[2]*(ob1 >> 8)/255/255 + (255-dptr[0])*pp[3*_a+0]/255;\
-         pp[3 * _a + 1]= dptr[0]*dptr[1]*(og1 >> 8)/255/255 + (255-dptr[0])*pp[3*_a+1]/255;\
-         pp[3 * _a + 2]= dptr[0]*dptr[0]*(or1 >> 8)/255/255 + (255-dptr[0])*pp[3*_a+2]/255;\
-       } else {\
-         pp[3 * _a + 0]= dptr[2]*(ob1 >> 8)/255;\
-         pp[3 * _a + 1]= dptr[1]*(og1 >> 8)/255;\
-         pp[3 * _a + 2]= dptr[0]*(or1 >> 8)/255;\
-       }\
-       pz[_a]=zz;				\
-    }						\
-    z+=dzdx;					\
-    s+=dsdx;					\
-    t+=dtdx;					\
-    og1+=dgdx;					\
-    or1+=drdx;					\
-    ob1+=dbdx;					\
+  unsigned char *dptr, a=255;\
+  zz=z >> ZB_POINT_Z_FRAC_BITS;		\
+    if (!zb->depthTest || ZCMP(zz,pz[_a])) {				\
+      unsigned long long si = ((s+0xFFFF) & 0xFF0000) >> 16,\
+      ti = ((t+0xFFFF) & 0xFF0000) >> 16;\
+      float fa;\
+      dptr = diffuse + (ti*zb->texW + si) * 3;\
+      if (alpha) a = alpha[ti*zb->texW + si];\
+      switch (zb->fragmentShader) {\
+      case 2:\
+        fa = 1.0f-gl_Max(gl_V2_Len(\
+                    gl_Max(gl_Abs((float)si-(zb->quadW-1)/2) - (zb->quadW-1)/2+zb->radius, 0),\
+                    gl_Max(gl_Abs((float)ti-(zb->quadH-1)/2) - (zb->quadH-1)/2+zb->radius, 0))-zb->radius, 0);\
+        if (fa < 0) fa = 0.0f;\
+        a *= fa;\
+        pp[3 * _a + 0]= a*(ob1 >> 8)/0xFF + (0xFF-a)*pp[3*_a+0]/0xFF;\
+        pp[3 * _a + 1]= a*(og1 >> 8)/0xFF + (0xFF-a)*pp[3*_a+1]/0xFF;\
+        pp[3 * _a + 2]= a*(or1 >> 8)/0xFF + (0xFF-a)*pp[3*_a+2]/0xFF;\
+      break;\
+      case 1:\
+        if (ti >= zb->texH-1 || si >= zb->texW-1) {\
+          a = 0;\
+        }\
+        pp[3 * _a + 0]= a*(ob1 >> 8)/0xFF + (0xFF-a)*pp[3*_a+0]/0xFF;\
+        pp[3 * _a + 1]= a*(og1 >> 8)/0xFF + (0xFF-a)*pp[3*_a+1]/0xFF;\
+        pp[3 * _a + 2]= a*(or1 >> 8)/0xFF + (0xFF-a)*pp[3*_a+2]/0xFF;\
+      break;\
+      default:\
+        pp[3 * _a + 0]= dptr[2]*(ob1 >> 8)/0xFF;\
+        pp[3 * _a + 1]= dptr[1]*(og1 >> 8)/0xFF;\
+        pp[3 * _a + 2]= dptr[0]*(or1 >> 8)/0xFF;\
+      }\
+      pz[_a]=zz;				\
+  }						\
+  z+=dzdx;					\
+  s+=dsdx;					\
+  t+=dtdx;					\
+  og1+=dgdx;					\
+  or1+=drdx;					\
+  ob1+=dbdx;					\
 }
 
 #else
@@ -308,7 +332,7 @@ void ZB_fillTriangleMappingPerspective(ZBuffer *zb,
 {						\
   register unsigned short *pz;		\
   register PIXEL *pp;		\
-  register unsigned int s,t,z,zz;	\
+  register long long s,t,z,zz;	\
   register unsigned int or1,og1,ob1; \
   register int n,dsdx,dtdx;		\
   float sz,tz,fz,zinv; \

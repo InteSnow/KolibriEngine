@@ -1,5 +1,4 @@
 
-
 ADD_OP(Color,7,"%f %f %f %f %d %d %d")
 ADD_OP(TexCoord,4,"%f %f %f %f")
 ADD_OP(EdgeFlag,1,"%d")
@@ -69,4 +68,6 @@ ADD_OP(TexCoordPointer, 4, "%d %C %d %p")
 /* opengl 1.1 polygon offset */
 ADD_OP(PolygonOffset, 2, "%f %f")
 
+ADD_OP(SetFragShader, 1, "%C")
+ADD_OP(SetUniform, 2, "%C %f")
 #undef ADD_OP
