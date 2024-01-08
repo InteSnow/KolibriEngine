@@ -4,7 +4,7 @@
 #include "Mesh.h"
 #include <vector>
 
-class Model : public KEComponent {
+class Model : public SceneComponent {
   std::vector<Mesh> meshes;
   ShadingType shading;
 

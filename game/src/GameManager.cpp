@@ -4,7 +4,8 @@
 #include <core/Events.h>
 #include <renderer/Model.h>
 #include <renderer/Light.h>
-#include <core/GameObject.h>
+#include <core/Object.h>
+#include <systems/GUI.h>
 #include GL_HEADER
 #include <GL/glu.h>
 #include <vector>
@@ -23,10 +24,11 @@ void moveCallback(int16 x, int16 y);
 void wheelCallback(int8 delta);
 void resizeCallback(uint16 w, uint16 h);
 
-static GameObject* model1;
-static GameObject* model2;
-static GameObject* model3;
-static GameObject* sun;
+static SceneObject* model1;
+static SceneObject* model2;
+static SceneObject* model3;
+static SceneObject* sun;
+static GUIObject* button;
 
 struct Character {
   Texture tex;
@@ -36,6 +38,9 @@ struct Character {
 };
 
 static std::unordered_map<uint32, Character> characters;
+
+static void onHover(Button* handle);
+static void onUnhover(Button* handle);
 
 // static Texture bitmapTextures[96];
 // static stbtt_bakedchar cdata[96];
@@ -47,26 +52,30 @@ void GameManager::init() {
 	keOnMouseWheel.subscribe(wheelCallback);
 	keOnResize.subscribe(resizeCallback);
 
-  model1 = GameObject::create<Model>();
+  model1 = SceneObject::create<Model>();
   *model1->get<Model>() = Model::create("resources/models/cube.obj", SHADE_LIT);
   model1->transform.scale(vec3(0.5f));
 
-  model2 = GameObject::create<Model>();
+  model2 = SceneObject::create<Model>();
   *model2->get<Model>() = Model::create("resources/models/medieval.obj", SHADE_LIT);
   model2->transform.scale(vec3(0.1f));
   model2->transform.move(vec3(-0.1f, -0.5f, 0.2f));
   model2->makeInactive();
 
-  model3 = GameObject::create<Model>();
+  model3 = SceneObject::create<Model>();
   *model3->get<Model>() = Model::create("resources/models/plane.obj", SHADE_LIT);
   model3->transform.scale(vec3(0.2f));
   model3->makeInactive();
 
-  sun = GameObject::create<Light>();
+  sun = SceneObject::create<Light>();
   sun->get<Light>()->type = LIGHT_DIRECT;
   sun->get<Light>()->setColor(vec3(0.99f, 0.98f, 0.83f));
   sun->get<Light>()->setDir(vec3(-1.0f, -1.0f, -1.0f));
 
+  button = GUIObject::create<Button>();
+  *button->get<Button>() = Button(100, 100, 150, 150, 10);
+  button->get<Button>()->onHover = onHover;
+  button->get<Button>()->onUnhover = onUnhover;
   // std::string fontBuffer;
 
   // File font = File::open("resources/fonts/arial.ttf", FILE_READ | FILE_BINARY);
@@ -119,6 +128,15 @@ void GameManager::update() {
   model1->transform.rotate(-30.0f*Time->deltaTime*vec3(0, 1.0f, 0));
   model2->transform.rotate(-30.0f*Time->deltaTime*vec3(0, 1.0f, 0));
   model3->transform.rotate(-30.0f*Time->deltaTime*vec3(0, 1.0f, 0));
+
+  Button* bComp = button->get<Button>();
+  if (bComp->pressed) {
+    bComp->setColor(vec3(0.0f, 1.0f, 1.0f));
+  } else if (bComp->hovered) {
+    bComp->setColor(vec3(0.0f, 1.0f, 0.0f));
+  } else {
+    bComp->setColor(vec3(1.0f));
+  }
 }
 
 void GameManager::render() {
@@ -180,6 +198,15 @@ void GameManager::render() {
 void GameManager::shutdown() {
 
 }
+
+void onHover(Button* handle) {
+  handle->setColor(vec3(0.0f, 1.0f, 0.0f));
+}
+
+void onUnhover(Button* handle) {
+  handle->setColor(vec3(1.0f));
+}
+
 
 void keyCallback(uint8 key, bool down) {
 	KE_DEBUG("Key 0x%02x is now %s", key, down ? "down" : "up");

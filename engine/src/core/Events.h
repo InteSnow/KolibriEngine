@@ -1,21 +1,25 @@
 #pragma once
 #include "defines.h"
 #include <vector>
-#include "core/logger.h"
+#include <unordered_set>
 
 template<typename... Args>
 class Event {
-  std::vector<void (*)(Args...)> callbacks;
+  std::unordered_set<void (*)(Args...)> callbacks;
 
 public:
   void fire(Args... args) const {
-    for (int i = 0; i < this->callbacks.size(); i++) {
-      callbacks[i](args...);
+    for (void (*callback)(Args...) : callbacks) {
+      callback(args...);
     }
   }
 
   void subscribe(void (*callback)(Args...)) {
-    this->callbacks.push_back(callback);
+    this->callbacks.insert(callback);
+  }
+
+  void unsubscribe(void (*callback)(Args...)) {
+    this->callbacks.erase(callback);
   }
 };
 

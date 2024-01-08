@@ -22,4 +22,6 @@ public:
 
   static void onResize(uint16 width, uint16 height);
   static void onKey(uint8 key, bool down);
+
+  static vec2 getFrameSize(void);
 };

@@ -1,17 +1,30 @@
 #pragma once
 #include "defines.h"
 
-class GameObject;
+class SceneObject;
+class GUIObject;
 
-class KEComponent {
-  virtual void onRegister(void);
-  virtual void onUnregister(void);
+class SceneComponent {
+  virtual void onRegister(void) {};
+  virtual void onUnregister(void) {};
 
-  virtual void onRenderBegin(void);
-  virtual void onDraw(void);
-  virtual void onRenderEnd(void);
+  virtual void onRenderBegin(void) {};
+  virtual void onDraw(void) {};
+  virtual void onRenderEnd(void) {};
 
-  friend GameObject;
+  friend SceneObject;
 public:
-  virtual ~KEComponent(void) = default;
+  virtual ~SceneComponent(void) = default;
+};
+
+class GUIComponent {
+  virtual void onRegister(void) {};
+  virtual void onUnregister(void) {};
+
+  virtual void onShapeDraw(void) {};
+  virtual void onTextDraw(void) {};
+
+  friend GUIObject;
+public:
+  virtual ~GUIComponent(void) = default;
 };

@@ -3,6 +3,7 @@
 #ifdef KE_PLATFORM_KOS32
 #include "systems/InputSystem.h"
 #include "core/Events.h"
+#include "core/logger.h"
 #include <cstring>
 #include <cstdio>
 #include <map>

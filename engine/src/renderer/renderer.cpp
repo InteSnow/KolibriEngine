@@ -109,16 +109,10 @@ void Renderer::endFrame() {
 }
 
 void Renderer::startGUI() {
-  float32 width = 150, height = 150, radius = 75;
 #ifdef KE_PLATFORM_WIN32
   glUseProgram(guiShader);
-  glUniform2f(glGetUniformLocation(guiShader, "dimensions"), width, height);
-  glUniform1f(glGetUniformLocation(guiShader, "radius"), radius);
 #else
   glSetFragShader(GL_FRAG_QUADS);
-  glSetUniform(GL_QUAD_WIDTH, width);
-  glSetUniform(GL_QUAD_HEIGHT, height);
-  glSetUniform(GL_RADIUS, radius);
 #endif
 
   glDisable(GL_DEPTH_TEST);
@@ -132,13 +126,6 @@ void Renderer::startGUI() {
   glMatrixMode(GL_PROJECTION);
   mat4 m = ortho(0.f, (float)frameWidth, 0.f, (float)frameHeight);
   glLoadMatrixf(m.data());
-
-  glBegin(GL_QUADS);
-  glTexCoord2f(0.0f, 0.0f); glColor3f(.0f, .0f, 1.0f); glVertex2f(200-width/2.f, 200+height/2.f);
-  glTexCoord2f(1.0f, 0.0f); glColor3f(.0f, .0f, 1.0f); glVertex2f(200+width/2.f, 200+height/2.f);
-  glTexCoord2f(1.0f, 1.0f); glColor3f(.0f, .0f, 1.0f); glVertex2f(200+width/2.f, 200-height/2.f);
-  glTexCoord2f(0.0f, 1.0f); glColor3f(.0f, .0f, 1.0f); glVertex2f(200-width/2.f, 200-height/2.f);
-  glEnd();
 }
 
 void Renderer::endGUI() {
@@ -169,4 +156,8 @@ void Renderer::onKey(uint8 key, bool down) {
     camera->switchInput();
     InputSystem::setCapture(!InputSystem::getCapture());
   }
+}
+
+vec2 Renderer::getFrameSize(void) {
+  return vec2(frameWidth, frameHeight);
 }

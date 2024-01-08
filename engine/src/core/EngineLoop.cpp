@@ -1,9 +1,10 @@
 #include "EngineLoop.h"
 #include "platform/platform.h"
 #include "systems/InputSystem.h"
+#include "systems/GUI.h"
 #include "core/Events.h"
 #include "renderer/renderer.h"
-#include "GameObject.h"
+#include "Object.h"
 
 bool shouldExit = false;
 
@@ -20,6 +21,7 @@ bool EngineLoop::init() {
   if (!platformInit("Kolibri Engine", 100, 100, 400, 400)) {
     return 0;
   }
+  GUI::init();
   InputSystem::setCapture(true);
   Renderer::init(400, 400);
   
@@ -46,17 +48,23 @@ bool EngineLoop::tick() {
   //KE_WARN("FPS = %f", 1000000.0f/(ds - start));
 
   Renderer::startFrame();
-  for (GameObject* obj : GameObject::objects) {
+  for (SceneObject* obj : SceneObject::objects) {
     obj->onRenderBegin();
   }
-  for (GameObject* obj : GameObject::objects) {
+  for (SceneObject* obj : SceneObject::objects) {
     obj->onDraw();
   }
-  for (GameObject* obj : GameObject::objects) {
+  for (SceneObject* obj : SceneObject::objects) {
     obj->onRenderEnd();
   }
   Renderer::startGUI();
+  for (GUIObject* obj : GUIObject::objects) {
+    obj->onShapeDraw();
+  }
   Renderer::startText();
+  for (GUIObject* obj : GUIObject::objects) {
+    obj->onTextDraw();
+  }
   this->gameManager.render();
   Renderer::endGUI();
   Renderer::endFrame(); 
@@ -71,12 +79,14 @@ void EngineLoop::exit() {
 
   this->gameManager.shutdown();
 
-  for (GameObject* obj : GameObject::objects) {
-    GameObject::destroyNoErase(obj);
+  for (SceneObject* obj : SceneObject::objects) {
+    SceneObject::destroyNoErase(obj);
   }
-  GameObject::objects.clear();
+  SceneObject::objects.clear();
 
   Renderer::shutdown();
+
+  GUI::shutdown();
 
   platformShutdown();
 

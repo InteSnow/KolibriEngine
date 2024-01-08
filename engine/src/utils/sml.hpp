@@ -43,23 +43,29 @@ struct vec<2, T> {
 		if (i >= 2) return y;
 		return (&x)[i];
 	}
-	vec<2, T> operator*(const T& a) {
+	vec<2, T> operator*(const T& a) const {
 		return vec<2, T>(x * a, y * a);
 	}
-	vec<2, T> operator*(T&& a) {
+	vec<2, T> operator*(T&& a) const {
 		return vec<2, T>(x * a, y * a);
 	}
-	vec<2, T> operator/(const T& a) {
+	vec<2, T> operator/(const T& a) const {
 		return this->operator*(1 / a);
 	}
-	vec<2, T> operator/(T&& a) {
+	vec<2, T> operator/(T&& a) const {
 		return this->operator*(1 / a);
 	}
 
-	vec<2, T> operator+(vec<2, T>& right) {
+	vec<2, T> operator+(const vec<2, T>& right) const {
 		return vec<2, T>(x + right.x, y + right.y);
 	}
-	vec<2, T> operator-(vec<2, T>& right) {
+	vec<2, T> operator-(const vec<2, T>& right) const {
+		return vec<2, T>(x - right.x, y - right.y);
+	}
+	vec<2, T> operator+(const vec<2, T>&& right) const {
+		return vec<2, T>(x + right.x, y + right.y);
+	}
+	vec<2, T> operator-(const vec<2, T>&& right) const {
 		return vec<2, T>(x - right.x, y - right.y);
 	}
 
@@ -113,16 +119,16 @@ struct vec<3, T> {
 		return this->operator*(1 / a);
 	}
 
-	vec<3, T> operator+(vec<3, T>& right) const {
+	vec<3, T> operator+(const vec<3, T>& right) const {
 		return vec<3, T>(x + right.x, y + right.y, z + right.z);
 	}
-	vec<3, T> operator+(vec<3, T>&& right) const {
+	vec<3, T> operator+(const vec<3, T>&& right) const {
 		return vec<3, T>(x + right.x, y + right.y, z + right.z);
 	}
-	vec<3, T> operator-(vec<3, T>& right) const {
+	vec<3, T> operator-(const vec<3, T>& right) const {
 		return vec<3, T>(x - right.x, y - right.y, z - right.z);
 	}
-	vec<3, T> operator-(vec<3, T>&& right) const {
+	vec<3, T> operator-(const vec<3, T>&& right) const {
 		return vec<3, T>(x - right.x, y - right.y, z - right.z);
 	}
 	vec<3, T> operator-() const {
@@ -190,16 +196,16 @@ struct vec<4, T> {
 		return this->operator*(1 / a);
 	}
 
-	vec<4, T> operator+(vec<4, T>& right) const {
+	vec<4, T> operator+(const vec<4, T>& right) const {
 		return vec<4, T>(x + right.x, y + right.y, z + right.z, w + right.w);
 	}
-	vec<4, T> operator+(vec<4, T>&& right) const {
+	vec<4, T> operator+(const vec<4, T>&& right) const {
 		return vec<4, T>(x + right.x, y + right.y, z + right.z, w + right.w);
 	}
-	vec<4, T> operator-(vec<4, T>& right) const {
+	vec<4, T> operator-(const vec<4, T>& right) const {
 		return vec<4, T>(x - right.x, y - right.y, z - right.z, w - right.w);
 	}
-	vec<4, T> operator-(vec<4, T>&& right) const {
+	vec<4, T> operator-(const vec<4, T>&& right) const {
 		return vec<4, T>(x - right.x, y - right.y, z - right.z, w - right.w);
 	}
 	vec<4, T> operator-() const{
@@ -248,6 +254,21 @@ struct vec<4, T> {
 // 		return h;
 // 	}
 // };
+
+template <typename T>
+vec<2, T> abs(const vec<2, T>& v) {
+	return vec<2, T>(v.x < 0 ? -v.x : v.x, v.y < 0 ? -v.y : v.y);
+}
+
+template <typename T>
+vec<2, T> abs(const vec<2, T>&& v) {
+	return vec<2, T>(v.x < 0 ? -v.x : v.x, v.y < 0 ? -v.y : v.y);
+}
+
+template <typename T>
+vec<2, T> max(const vec<2, T>&& left, const vec<2, T>&& right) {
+	return vec<2,T>(left.x > right.x ? left.x : right.x, left.y > right.y ? left.y : right.y);
+}
 
 template <typename T>
 vec<3, T> operator*(T left, const vec<3, T>& right){

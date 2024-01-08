@@ -1,6 +1,7 @@
 #include "InputSystem.h"
 #include "core/Events.h"
 #include "platform/platform.h"
+#include "renderer/renderer.h"
 #include <cstring>
 
 KeyboardState InputSystem::pKeyboard;
@@ -51,8 +52,9 @@ bool InputSystem::getCapture(void) {
 
 void InputSystem::processMouse(int16 x, int16 y) {
   cMouse.x = x;
-  cMouse.y = y;
-  keOnMouseMove.fire(x, y);
+  if (!InputSystem::captureMode) cMouse.y = Renderer::getFrameSize().y-y-1;
+  else cMouse.y = y;
+  keOnMouseMove.fire(cMouse.x, cMouse.y);
 }
 
 void InputSystem::processWheel(int8 delta) {

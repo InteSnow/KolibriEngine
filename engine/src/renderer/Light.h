@@ -24,7 +24,7 @@ struct SpotLight {
   float exp;
 };
 
-class Light : public KEComponent {
+class Light : public SceneComponent {
   uint32 slot;
   bool enabled = 0;
 
