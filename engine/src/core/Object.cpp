@@ -33,6 +33,14 @@ bool SceneObject::isActive() {
   return this->active;
 }
 
+void SceneObject::Update() {
+  if (!this->active) return;
+
+  for (SceneComponent* c : this->components) {
+    c->Update();
+  }
+}
+
 void SceneObject::onRenderBegin() {
   if (!this->active) return;
 
@@ -101,18 +109,19 @@ bool GUIObject::isActive() {
   return this->active;
 }
 
+void GUIObject::Update() {
+  if (!this->active) return;
+  for (GUIComponent* c : this->components) {
+    c->Update();
+  }
+}
+
 void GUIObject::onShapeDraw() {
   if (!this->active) return;
-
-  for (GUIComponent* c : this->components) {
-    c->onShapeDraw();
-  }
+  this->rect.onShapeDraw();
 }
 
 void GUIObject::onTextDraw() {
   if (!this->active) return;
-
-  for (GUIComponent* c : this->components) {
-    c->onTextDraw();
-  }
+  this->rect.onTextDraw();
 }

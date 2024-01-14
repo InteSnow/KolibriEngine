@@ -81,9 +81,10 @@ int winglMakeCurrent(WINGLContext ctx)
   win_y &= ~3;
   int mode;
   ZBuffer *zb;
-
-  DeleteDC(tctx->hBufDC);
-  DeleteObject(tctx->hBufBM);
+  if (tctx->hBufDC) {
+    DeleteDC(tctx->hBufDC);
+    DeleteObject(tctx->hBufBM);
+  }
 
   BITMAPINFO bmi = {0};
   bmi.bmiHeader.biSize = sizeof(BITMAPINFOHEADER);
@@ -100,7 +101,6 @@ int winglMakeCurrent(WINGLContext ctx)
   //SetBitmapBits(tctx->hBufBM, 3*tctx->dx*tctx->dy, tctx->gl_context->zb->pbuf);
   //tctx->hBufBM = CreateDIBSection(tctx->hDC, &bmi, DIB_RGB_COLORS, NULL, 0, 0);
   
-  printf("hello %d\n", bm.bmBitsPixel);
   SelectObject(tctx->hBufDC, tctx->hBufBM);
 
   if (tctx->gl_context == NULL) {
@@ -137,7 +137,6 @@ int winglMakeCurrent(WINGLContext ctx)
     // SetBitmapBits(tctx->hBufBM, tctx->dx*tctx->dy, (const void*)(tctx->gl_context->zb->pbuf));
     // SelectObject(tctx->hBufDC, tctx->hBufBM);
   }
-  
 
   return 1;
 }

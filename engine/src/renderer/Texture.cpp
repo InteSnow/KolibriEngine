@@ -42,6 +42,7 @@ Texture Texture::create(uint8* bitmap, int w, int h, int channels) {
   GLint components;
   #ifdef KE_PLATFORM_WIN32
   components = format;
+  //components = channels;
   #else
   components = channels;
   #endif

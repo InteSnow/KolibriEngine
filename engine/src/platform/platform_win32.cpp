@@ -8,6 +8,8 @@
 #include <windows.h>
 #include <windowsx.h>
 #define GLEW_STATIC
+//#include <GL/gl.h>
+//#include <wingl.h>
 #include <GL/glew.h>
 #include <GL/wglew.h>
 
@@ -25,6 +27,7 @@ typedef struct Platform {
   HDC bufDC;
   HBITMAP bufBits;
   HGLRC context;
+  //WINGLContext context;
 
   uint16 width;
   uint16 height;
@@ -127,11 +130,13 @@ bool platformInit(const char* appName, int32 x, int32 y, int32 width, int32 heig
   }
 
   platform.context = wglCreateContext(platform.device);
+  //platform.context = winglCreateContext(platform.device);
   if (!platform.context) {
     MessageBoxA(NULL, "Failed to create OpenGL context", "Fatal error", MB_ICONERROR | MB_OK);
     return 0;
   }
   wglMakeCurrent(platform.device, platform.context);
+  //winglMakeCurrent(platform.context);
 
   if (glewInit() != GLEW_OK  || wglewInit() != GLEW_OK) {
     MessageBoxA(NULL, "Failed to initialize GLAD", "Fatal error", MB_ICONERROR | MB_OK);
@@ -147,6 +152,7 @@ bool platformInit(const char* appName, int32 x, int32 y, int32 width, int32 heig
 void platformShutdown() {
   wglMakeCurrent(platform.device, NULL);
   wglDeleteContext(platform.context);
+  //winglDestroyContext(platform.context);
 
   ReleaseDC(platform.hWnd, platform.device);
   SetConsoleMode(GetStdHandle(STD_INPUT_HANDLE), platform.consoleMode);
@@ -169,6 +175,7 @@ void pollEvents() {
 
 void platformPresent() {
   wglSwapLayerBuffers(platform.device, WGL_SWAP_MAIN_PLANE);
+  //winglSwapBuffers();
 }
 
 LRESULT procWinInput(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam) {
@@ -274,9 +281,15 @@ LRESULT procWinInput(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam) {
 
     case WM_SIZE:
       if (platform.toggling) return 0;
-      platform.width = LOWORD(lParam);
-      platform.height = HIWORD(lParam);
+      platform.width = LOWORD(lParam) & ~3;
+      platform.height = HIWORD(lParam) & ~3;
       keOnResize.fire(platform.width, platform.height);
+      // static bool a = 0;
+      // if (!a) {
+      //   a = 1;
+      //   return 0;
+      // }
+      //winglMakeCurrent(platform.context);
       return 0;
   }
   

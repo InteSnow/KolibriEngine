@@ -13,11 +13,16 @@ class SceneObject {
   friend class EngineLoop;
   
   static void destroyNoErase(SceneObject* obj);
+
+  void Update(void);
+  void onRenderBegin(void);
+  void onDraw(void);
+  void onRenderEnd(void);
 public:
   Transform transform = Transform();
 
   template <class... Ts>
-  static SceneObject* create(void);
+  static SceneObject* create(Ts... args);
 
   static void destroy(SceneObject* obj);
 
@@ -25,7 +30,7 @@ public:
   T* get(void);
 
   template <class T>
-  void add(void);
+  void add(T arg);
 
   template <class T>
   void remove(void);
@@ -33,10 +38,6 @@ public:
   void makeActive(void);
   void makeInactive(void);
   bool isActive(void);
-
-  void onRenderBegin(void);
-  void onDraw(void);
-  void onRenderEnd(void);
 };
 
 #define OBJECT_TYPE SceneObject
@@ -44,6 +45,8 @@ public:
 #include "Object.hpp"
 #undef COMPONENT_TYPE
 #undef OBJECT_TYPE
+
+#include "gui/Rect.h"
 
 class GUIObject {
   bool active = true;
@@ -55,9 +58,15 @@ class GUIObject {
   friend class EngineLoop;
   
   static void destroyNoErase(GUIObject* obj);
+  
+  void Update(void);
+  void onShapeDraw(void);
+  void onTextDraw(void);
 public:
+  Rect rect;
+
   template <class... Ts>
-  static GUIObject* create(void);
+  static GUIObject* create(Ts... args);
 
   static void destroy(GUIObject* obj);
 
@@ -65,7 +74,7 @@ public:
   T* get(void);
 
   template <class T>
-  void add(void);
+  void add(T arg);
 
   template <class T>
   void remove(void);
@@ -73,9 +82,6 @@ public:
   void makeActive(void);
   void makeInactive(void);
   bool isActive(void);
-
-  void onShapeDraw(void);
-  void onTextDraw(void);
 };
 
 #define OBJECT_TYPE GUIObject

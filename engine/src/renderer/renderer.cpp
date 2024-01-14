@@ -100,7 +100,6 @@ void Renderer::startFrame(void) {
 
   glMatrixMode(GL_PROJECTION);
   glLoadMatrixf(projection.data());
-  
   glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 }
 
@@ -111,6 +110,7 @@ void Renderer::endFrame() {
 void Renderer::startGUI() {
 #ifdef KE_PLATFORM_WIN32
   glUseProgram(guiShader);
+  //glSetFragShader(GL_FRAG_QUADS);
 #else
   glSetFragShader(GL_FRAG_QUADS);
 #endif
@@ -132,12 +132,14 @@ void Renderer::endGUI() {
 #ifdef KE_PLATFORM_KOS32
   glSetFragShader(GL_FRAG_DEFAULT);
 #endif
+  //glSetFragShader(GL_FRAG_DEFAULT);
   glEnable(GL_DEPTH_TEST);
   glDisable(GL_BLEND);
 }
 
 void Renderer::startText() {
 #ifdef KE_PLATFORM_WIN32
+  //glSetFragShader(GL_FRAG_TEXT);
   glUseProgram(0);
 #else
   glSetFragShader(GL_FRAG_TEXT);

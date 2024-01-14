@@ -1,10 +1,12 @@
 #include "EngineLoop.h"
+#include "core/logger.h"
+#include "core/Events.h"
+#include "core/Object.h"
 #include "platform/platform.h"
 #include "systems/InputSystem.h"
+#include "systems/Fonts.h"
 #include "systems/GUI.h"
-#include "core/Events.h"
 #include "renderer/renderer.h"
-#include "Object.h"
 
 bool shouldExit = false;
 
@@ -14,22 +16,22 @@ static void keyCallback(uint8 key, bool down);
 static TimeInfo _Time = {};
 
 const TimeInfo* Time = &_Time;
-
+float fps;
 bool EngineLoop::init() {
   InputSystem::init();
 
-  if (!platformInit("Kolibri Engine", 100, 100, 400, 400)) {
+  if (!platformInit("Kolibri Engine", 100, 100, 800, 600)) {
     return 0;
   }
+  Fonts::init();
   GUI::init();
   InputSystem::setCapture(true);
-  Renderer::init(400, 400);
+  Renderer::init(800, 600);
   
   keOnQuit.subscribe(exitLoop);
   keOnKey.subscribe(keyCallback);
 
   this->gameManager.init();
-
   return 1;
 }
 
@@ -40,12 +42,19 @@ bool EngineLoop::tick() {
   pollEvents();
   InputSystem::update();
   Camera::updateAll(_Time.deltaTime);
+  for (SceneObject* obj : SceneObject::objects) {
+    obj->Update();
+  }
+  for (GUIObject* obj : GUIObject::objects) {
+    obj->Update();
+  }
   this->gameManager.update();
 
   end = getTime();
   _Time.deltaTime = (end - start)/1000000.0f;
   _Time.time += _Time.deltaTime;
-  //KE_WARN("FPS = %f", 1000000.0f/(ds - start));
+  fps = 1000000.0f/(end - start);
+  //KE_WARN("FPS = %f", 1000000.0f/(end - start));
 
   Renderer::startFrame();
   for (SceneObject* obj : SceneObject::objects) {
@@ -87,6 +96,7 @@ void EngineLoop::exit() {
   Renderer::shutdown();
 
   GUI::shutdown();
+  Fonts::shutdown();
 
   platformShutdown();
 
