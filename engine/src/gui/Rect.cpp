@@ -15,7 +15,7 @@ float Rect::getRadius() const {
   return this->radius;
 }
 
-vec3 Rect::getColor() const {
+vec4 Rect::getColor() const {
   return this->color;
 }
 
@@ -31,7 +31,7 @@ void Rect::setRadius(uint32 radius) {
   this->radius = radius;
 }
 
-void Rect::setColor(vec3 color) {
+void Rect::setColor(vec4 color) {
   this->color = color;
 }
 
@@ -40,7 +40,8 @@ bool Rect::isHit(int16 x, int16 y) const {
   return max(coords - dimensions/2 + radius, vec2(0, 0)).length() <= radius;
 }
 
-void Rect::onShapeDraw(void) {
+void Rect::onDraw(void) {
+  if (color.w == 0) return;
 #ifdef KE_PLATFORM_WIN32
   glUniform2f(glGetUniformLocation(guiShader, "dimensions"), dimensions.x, dimensions.y);
   glUniform1f(glGetUniformLocation(guiShader, "radius"), radius);
@@ -53,18 +54,14 @@ void Rect::onShapeDraw(void) {
   glSetUniform(GL_RADIUS, radius);
 #endif
   glBegin(GL_QUADS);
-  glTexCoord2f(0.0f, 0.0f); glColor3fv(&color.x); glVertex2f(position.x+0,            position.y+dimensions.y);
-  glTexCoord2f(1.0f, 0.0f); glColor3fv(&color.x); glVertex2f(position.x+dimensions.x, position.y+dimensions.y);
-  glTexCoord2f(1.0f, 1.0f); glColor3fv(&color.x); glVertex2f(position.x+dimensions.x, position.y);
-  glTexCoord2f(0.0f, 1.0f); glColor3fv(&color.x); glVertex2f(position.x+0,            position.y);
+  glTexCoord2f(0.0f, 0.0f); glColor4fv(&color.x); glVertex2f(position.x+0,            position.y+dimensions.y);
+  glTexCoord2f(1.0f, 0.0f); glColor4fv(&color.x); glVertex2f(position.x+dimensions.x, position.y+dimensions.y);
+  glTexCoord2f(1.0f, 1.0f); glColor4fv(&color.x); glVertex2f(position.x+dimensions.x, position.y);
+  glTexCoord2f(0.0f, 1.0f); glColor4fv(&color.x); glVertex2f(position.x+0,            position.y);
   glEnd();
 }
 
-void Rect::onTextDraw(void) {
-
-}
-
-Rect::Rect(uint32 x, uint32 y, uint32 width, uint32 height, uint32 radius, vec3 color)
+Rect::Rect(uint32 x, uint32 y, uint32 width, uint32 height, uint32 radius, vec4 color)
  : position{vec2(x, y)}, dimensions{vec2(width, height)}, color{color}
 {
   this->radius = radius;

@@ -2,7 +2,7 @@
 #include "core/Events.h"
 #include "core/Object.h"
 
-std::unordered_set<Button*> buttons;
+static std::unordered_set<Button*> buttons;
 
 static void guiOnMove(int16 x, int16 y);
 static void guiOnClick(uint8 mbutton, bool down);
@@ -47,7 +47,7 @@ void guiOnMove(int16 x, int16 y) {
   
   bool hit = 0;
   for (Button* button : buttons) {
-    hit = button->parent->rect.isHit(x, y);
+    hit = button->container->isHit(x, y);
     if (hit && !button->isHovered()) {
       button->onHover();
     } else if (!hit && button->isHovered()) {
@@ -62,13 +62,10 @@ void guiOnClick(uint8 mbutton, bool down) {
   int16 x, y;
   InputSystem::getMousePos(x, y);
   for (Button* button : buttons) {
-    if (button->parent->rect.isHit(x, y)) {
-      if (down) {
-        button->onPress((ButtonCode)mbutton);
-      }
-      else {
-        button->onRelease((ButtonCode)mbutton);
-      }
+    if (button->container->isHit(x, y) && down) {
+      button->onPress((ButtonCode)mbutton);
+    } else if (button->isPressed((ButtonCode)mbutton) && !down) {
+      button->onRelease((ButtonCode)mbutton);
     }
   }
 }

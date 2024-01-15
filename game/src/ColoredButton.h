@@ -6,9 +6,9 @@ class ColoredButton : public Button {
   uint16 mode = 0;
 public:
 
-  ColoredButton(vec3 dc = vec3(1.0f), vec3 hc = vec3(0.9f), vec3 pc = vec3(0.8f));
+  ColoredButton(vec4 dc = vec4(1.0f), vec4 hc = vec4(vec3(0.9f), 1.0f), vec4 pc = vec4(vec3(0.8f), 1.0f));
 
-  vec3 defaultC;
-  vec3 hoveredC;
-  vec3 pressedC;
+  vec4 defaultC;
+  vec4 hoveredC;
+  vec4 pressedC;
 };

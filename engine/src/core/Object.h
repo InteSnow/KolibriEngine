@@ -47,6 +47,7 @@ public:
 #undef OBJECT_TYPE
 
 #include "gui/Rect.h"
+#include "gui/Text.h"
 
 class GUIObject {
   bool active = true;
@@ -64,6 +65,7 @@ class GUIObject {
   void onTextDraw(void);
 public:
   Rect rect;
+  Text text;
 
   template <class... Ts>
   static GUIObject* create(Ts... args);
@@ -86,6 +88,8 @@ public:
 
 #define OBJECT_TYPE GUIObject
 #define COMPONENT_TYPE GUIComponent
+#define GUI
 #include "Object.hpp"
+#undef GUI
 #undef COMPONENT_TYPE
 #undef OBJECT_TYPE

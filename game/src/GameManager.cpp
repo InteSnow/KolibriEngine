@@ -25,6 +25,7 @@ static SceneObject* model2;
 static SceneObject* model3;
 static SceneObject* sun;
 static GUIObject* button;
+static GUIObject* slider;
 
 extern float fps;
 
@@ -59,10 +60,19 @@ void GameManager::init() {
   sun->get<Light>()->setDir(vec3(-1.0f, -1.0f, -1.0f));
 
   button = GUIObject::create<ColoredButton>(
-    ColoredButton(vec3(1.0f), vec3(0.0f, 0.0f, 1.0f), vec3(0.0f, 1.0f, 0.0f))
+    ColoredButton(vec4(1.0f), vec4(0.0f, 0.0f, 1.0f, 1.0f), vec4(0.0f, 1.0f, 0.0f, 1.0f))
   );
   button->rect = Rect(100, 150, 150, 50, 10);
+  button->text = Text(&button->rect, "Arial", 40, 40, vec3(0.0f));
+  button->text.setText("%s", "Button");
 
+  slider = GUIObject::create<Slider>(
+    Slider()
+  );
+  slider->rect = Rect(100, 250, 150, 40, 0, vec4(0.0f));
+  slider->get<Slider>()->setFont("Arial", 40, 40);
+  slider->get<Slider>()->setRange(vec2(1.0f, 3.0f));
+  slider->get<Slider>()->setValue(1.0f);
 
   uint32 glyphs[160];
   for (uint32 c = 32; c < 128; c++) {
@@ -72,7 +82,7 @@ void GameManager::init() {
     glyphs[c-0x410+96] = c;
   }
   Fonts::load("resources/fonts/times.ttf", 40, glyphs, 160);
-  Fonts::load("resources/fonts/arial.ttf", 80, glyphs, 160);
+  Fonts::load("resources/fonts/arial.ttf", 40, glyphs, 160);
 }
 
 void GameManager::update() {
@@ -85,7 +95,7 @@ void GameManager::update() {
 }
 
 void GameManager::render() {
-  Fonts::select("Arial", 80);
+  Fonts::select("Arial", 40);
   Fonts::print(120, 100, 40, vec3(1.0f, 0.0f, 0.0f), "%d", (int)fps);
   Fonts::select("Times New Roman", 40);
   Fonts::print(20, 100, 40, vec3(1.0f), "FPS: ");

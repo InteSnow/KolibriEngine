@@ -5,10 +5,7 @@
 
 #include GL_HEADER
 
-#include <string>
 #include <sstream>
-#include <unordered_map>
-#include <stdarg.h>
 #include <vector>
 
 FT_Library Fonts::ft;
@@ -20,7 +17,7 @@ static std::string to_string(uint32 n) {
   return s.str();
 }
 
-static std::string sformat(const char* format, va_list vl) {
+std::string sformat(const char* format, va_list vl) {
   va_list vlc;
   va_copy(vlc, vl);
   uint32 len = vsnprintf(NULL, 0, format, vlc);
@@ -31,18 +28,6 @@ static std::string sformat(const char* format, va_list vl) {
 
   return std::string(data.data(), len);
 }
-
-struct Character {
-  Texture tex;
-  vec2 bearing;
-  vec2 size;
-  uint32 advance;
-};
-
-struct Font {
-  std::unordered_map<uint32, Character> characters;
-  uint32 height;
-};
 
 static std::unordered_map<std::string, Font> fonts;
 
@@ -69,7 +54,9 @@ bool Fonts::load(const char* path, uint32 height, uint32* glyphs, uint32 glyphCo
 
   std::string fontName = std::string(face->family_name) + std::string(" ") + to_string(height);
   fonts[fontName].height = height;
-  
+  fonts[fontName].familyName = face->family_name;
+  fonts[fontName].median = (face->ascender) >> 7;
+
   Character glyph = {};
   uint32 c;
   for (uint32 i = 0; i < glyphCount; i++) {
@@ -85,7 +72,6 @@ bool Fonts::load(const char* path, uint32 height, uint32* glyphs, uint32 glyphCo
 
     fonts[fontName].characters[c] = glyph;
   }
-
   FT_Done_Face(face);
 
   Fonts::activeFont = &fonts[fontName];
@@ -101,16 +87,50 @@ bool Fonts::select(const char* familyName, uint32 height) {
   return 0;
 }
 
+uint32 Fonts::getWidth(uint32 height, const char* format, ...) {
+  va_list vl;
+  va_start(vl, format);
+  uint32 width = Fonts::getWidth(height, format, vl);
+  va_end(vl);
+ 
+  return width;
+}
+
 void Fonts::print(uint32 x, uint32 y, uint32 height, vec3 color, const char* format, ...) {
+  va_list vl;
+  va_start(vl, format);
+  Fonts::print(x, y, height, color, format, vl);
+  va_end(vl);
+}
+
+uint32 Fonts::getWidth(uint32 height, const char* format, va_list vl) {
+  std::string text = sformat(format, vl);
+
+  float scale = 1.0f;
+  if (height) {
+    scale = (float)height / Fonts::activeFont->height;
+  }
+
+  uint32 width = 0;
+  for (uint32 i = 0; text[i]; i++) {
+    Character glyph = Fonts::activeFont->characters[text[i]];
+
+    float xpos = width + glyph.bearing.x * scale;
+
+    width += (glyph.advance >> 6) * scale;
+  }
+
+  return width;
+}
+
+
+void Fonts::print(uint32 x, uint32 y, uint32 height, vec3 color, const char* format, va_list vl) {
+  std::string text = sformat(format, vl);
+  
   float scale = 1.0f;
   if (height) {
     scale = (float)height / Fonts::activeFont->height;
   } 
-
-  va_list vl;
-  va_start(vl, format);
-  std::string text = sformat(format, vl);
-  va_end(vl);
 
   for (uint32 i = 0; text[i]; i++) {
     Character glyph = Fonts::activeFont->characters[text[i]];
@@ -134,4 +154,8 @@ void Fonts::print(uint32 x, uint32 y, uint32 height, vec3 color, const char* for
 
     x += (glyph.advance >> 6) * scale;
   }
+}
+
+const Font* Fonts::getActive() {
+  return Fonts::activeFont;
 }

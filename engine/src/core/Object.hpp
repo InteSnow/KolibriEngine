@@ -44,7 +44,9 @@ void OBJECT_TYPE::add(T arg) {
   static_assert(std::is_base_of<COMPONENT_TYPE, T>::value, "Component is not derived from COMPONENT_TYPE");
   if (this->get<T>()) return;
   COMPONENT_TYPE* component = new T(arg);
-  component->parent = this;
+  #ifdef GUI
+  component->container = &this->rect;
+  #endif
   component->onRegister();
   this->components.insert(component);
 }

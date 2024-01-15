@@ -363,7 +363,7 @@ void pollEvents() {
         y = 0;
         clear = true;
       }
-      if (!mEvents && (x != ox || y != oy)) {
+      if ((x != ox || y != oy)) {
         if (platform.mcapture && !clear) {
           x -= platform.width/2;
           y -= platform.height/2;
@@ -374,7 +374,8 @@ void pollEvents() {
           x = platform.width/2;
           y = platform.height/2;
         }
-      } else if (mEvents & 0b000001000000000000000) {
+      }
+      if (mEvents & 0b000001000000000000000) {
         InputSystem::processWheel(getWheelDelta() > 0 ? -1 : 1);
       } else if (mEvents & 0b111110001111100000000) {
         down = mEvents & 0b1111100000000;

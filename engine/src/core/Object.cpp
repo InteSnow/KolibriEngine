@@ -118,10 +118,16 @@ void GUIObject::Update() {
 
 void GUIObject::onShapeDraw() {
   if (!this->active) return;
-  this->rect.onShapeDraw();
+  this->rect.onDraw();
+  for (GUIComponent* c : this->components) {
+    c->onShapeDraw();
+  }
 }
 
 void GUIObject::onTextDraw() {
   if (!this->active) return;
-  this->rect.onTextDraw();
+  this->text.onDraw();
+  for (GUIComponent* c : this->components) {
+    c->onTextDraw();
+  }
 }
