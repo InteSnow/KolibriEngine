@@ -8,7 +8,7 @@
 #include <stdarg.h>
 #include <string>
 
-std::string sformat(const char* format, va_list vl);
+std::wstring sformat(const wchar_t* format, va_list vl);
 
 struct Character {
   Texture tex;
@@ -35,11 +35,11 @@ public:
 
   static bool select(const char* familyName, uint32 height);
 
-  static uint32 getWidth(uint32 height, const char* format, ...);
-  static void print(uint32 x, uint32 y, uint32 height, vec3 color, const char* format, ...);
+  static uint32 getWidth(uint32 height, const wchar_t* format, ...);
+  static void print(uint32 x, uint32 y, uint32 height, vec3 color, const wchar_t* format, ...);
 
-  static uint32 getWidth(uint32 height, const char* format, va_list vl);
-  static void print(uint32 x, uint32 y, uint32 height, vec3 color, const char* format, va_list vl);
+  static uint32 getWidth(uint32 height, const wchar_t* format, va_list vl);
+  static void print(uint32 x, uint32 y, uint32 height, vec3 color, const wchar_t* format, va_list vl);
 
   static const Font* getActive(void);
 };

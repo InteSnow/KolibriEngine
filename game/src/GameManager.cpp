@@ -1,18 +1,24 @@
 #include "GameManager.h"
+
 #include <core/logger.h>
-#include <systems/InputSystem.h>
+#include <core/File.h>
 #include <core/Events.h>
+#include <core/Object.h>
+
+#include <renderer/renderer.h>
 #include <renderer/Model.h>
 #include <renderer/Light.h>
-#include <core/Object.h>
+
+#include <physics/RigidBody.h>
+
+#include <systems/InputSystem.h>
 #include <systems/GUI.h>
 #include <systems/Fonts.h>
-#include GL_HEADER
-#include <vector>
-#include <core/File.h>
-#include "ColoredButton.h"
+#include <systems/Physics.h>
 
-std::vector<Vertex> vertices = {};
+#include <vector>
+
+#include "NamedSlider.h"
 
 void keyCallback(uint8 key, bool down);
 void buttonCallback(uint8 button, bool down);
@@ -24,8 +30,24 @@ static SceneObject* model1;
 static SceneObject* model2;
 static SceneObject* model3;
 static SceneObject* sun;
-static GUIObject* button;
-static GUIObject* slider;
+static GUIObject* restitution;
+static GUIObject* gravity;
+static GUIObject* friction;
+static GUIObject* fpsCounter;
+
+static SceneObject* body1;
+static SceneObject* body2;
+static SceneObject* plane;
+
+static std::vector<Vertex> vertices = {
+  {{-1.0f, 0.0f,-1.0f}, {0.0f, 1.0f, 0.0f}, {0.83f,0.41f,0.26f}, {0.0f, 0.0f}},
+  {{ 1.0f, 0.0f,-1.0f}, {0.0f, 1.0f, 0.0f}, {0.83f,0.41f,0.26f}, {0.0f, 0.0f}},
+  {{ 1.0f, 0.0f, 1.0f}, {0.0f, 1.0f, 0.0f}, {0.83f,0.41f,0.26f}, {0.0f, 0.0f}},
+
+  {{-1.0f, 0.0f,-1.0f}, {0.0f, 1.0f, 0.0f}, {0.83f,0.41f,0.26f}, {0.0f, 0.0f}},
+  {{ 1.0f, 0.0f, 1.0f}, {0.0f, 1.0f, 0.0f}, {0.83f,0.41f,0.26f}, {0.0f, 0.0f}},
+  {{-1.0f, 0.0f, 1.0f}, {0.0f, 1.0f, 0.0f}, {0.83f,0.41f,0.26f}, {0.0f, 0.0f}},
+};
 
 extern float fps;
 
@@ -59,20 +81,29 @@ void GameManager::init() {
   sun->get<Light>()->setColor(vec3(0.99f, 0.98f, 0.83f));
   sun->get<Light>()->setDir(vec3(-1.0f, -1.0f, -1.0f));
 
-  button = GUIObject::create<ColoredButton>(
-    ColoredButton(vec4(1.0f), vec4(0.0f, 0.0f, 1.0f, 1.0f), vec4(0.0f, 1.0f, 0.0f, 1.0f))
+  body1 = SceneObject::create<Model>(
+    Model::create("resources/models/cube.obj", SHADE_LIT)
   );
-  button->rect = Rect(100, 150, 150, 50, 10);
-  button->text = Text(&button->rect, "Arial", 40, 40, vec3(0.0f));
-  button->text.setText("%s", "Button");
+  body1->transform.scale(vec3(0.25f));
+  body1->add<RigidBody>(RigidBody(body1->get<Model>()->getBoundingBox()));
+  body1->get<RigidBody>()->mass = 0.125f;
+  body1->makeInactive();
 
-  slider = GUIObject::create<Slider>(
-    Slider()
+  body2 = SceneObject::create<Model>(
+    Model::create("resources/models/cube.obj", SHADE_LIT)
   );
-  slider->rect = Rect(100, 250, 150, 40, 0, vec4(0.0f));
-  slider->get<Slider>()->setFont("Arial", 40, 40);
-  slider->get<Slider>()->setRange(vec2(1.0f, 3.0f));
-  slider->get<Slider>()->setValue(1.0f);
+  body2->transform.scale(vec3(0.5f));
+  body2->add<RigidBody>(RigidBody(body2->get<Model>()->getBoundingBox()));
+  body2->makeInactive();
+
+  plane = SceneObject::create<Mesh>(
+    Mesh::create(std::move(vertices), SHADE_LIT)
+  );
+  plane->add<RigidBody>(RigidBody(plane->get<Mesh>()->getBoundingBox()));
+  plane->get<RigidBody>()->immovable = 1;
+  plane->transform.move(vec3(0.0f, -1.0f, 0.0f));
+  plane->transform.scale(vec3(10.0f));
+  plane->makeInactive();
 
   uint32 glyphs[160];
   for (uint32 c = 32; c < 128; c++) {
@@ -81,8 +112,49 @@ void GameManager::init() {
   for (uint32 c = 0x410; c <= 0x44f; c++) {
     glyphs[c-0x410+96] = c;
   }
-  Fonts::load("resources/fonts/times.ttf", 40, glyphs, 160);
-  Fonts::load("resources/fonts/arial.ttf", 40, glyphs, 160);
+  Fonts::load("resources/fonts/arial.ttf", 30, glyphs, 160);
+
+  restitution = GUIObject::create<NamedSlider>(
+    NamedSlider()
+  );
+
+  restitution->makeInactive();
+  restitution->rect = Rect(25, 200, 150, 20, 0, vec4(0.0f));
+  restitution->get<NamedSlider>()->setFont("Arial", 30, 30);
+  restitution->get<NamedSlider>()->nameOffset = vec2(0.0f, 40.0f);
+  restitution->get<NamedSlider>()->setName(L"Упругость");
+  restitution->get<NamedSlider>()->setRange(vec2(0.0f, 1.0f));
+  restitution->get<NamedSlider>()->setValue(0.25f);
+  restitution->get<NamedSlider>()->setColor(vec3(0.7f));
+
+  gravity = GUIObject::create<NamedSlider>(
+    NamedSlider()
+  );
+  gravity->makeInactive();
+  gravity->rect = Rect(25, 125, 150, 20, 0, vec4(0.0f));
+  gravity->get<NamedSlider>()->setFont("Arial", 30, 30);
+  gravity->get<NamedSlider>()->nameOffset = vec2(0.0f, 40.0f);
+  gravity->get<NamedSlider>()->setName(L"g");
+  gravity->get<NamedSlider>()->setRange(vec2(-20.0f, 0.0f));
+  gravity->get<NamedSlider>()->setValue(-9.8f);
+  gravity->get<NamedSlider>()->setColor(vec3(0.7f));
+
+  friction = GUIObject::create<NamedSlider>(
+    NamedSlider()
+  );
+  friction->makeInactive();
+  friction->rect = Rect(25, 50, 150, 20, 0, vec4(0.0f));
+  friction->get<NamedSlider>()->setFont("Arial", 30, 30);
+  friction->get<NamedSlider>()->nameOffset = vec2(0.0f, 40.0f);
+  friction->get<NamedSlider>()->setName(L"Трение");
+  friction->get<NamedSlider>()->setRange(vec2(0.0f, 1.0f));
+  friction->get<NamedSlider>()->setValue(1.0f);
+  friction->get<NamedSlider>()->setColor(vec3(0.7f));
+
+  fpsCounter = GUIObject::create<>();
+  fpsCounter->rect = Rect(Renderer::getFrameSize().x-150, Renderer::getFrameSize().y-50, 100, 40, 0, vec4(0.0f));
+  fpsCounter->text = Text(&fpsCounter->rect, "Arial", 30, 30, vec3(1.0f));
+  fpsCounter->text.center = 0;
 }
 
 void GameManager::update() {
@@ -92,13 +164,18 @@ void GameManager::update() {
   model1->transform.rotate(-30.0f*Time->deltaTime*vec3(0, 1.0f, 0));
   model2->transform.rotate(-30.0f*Time->deltaTime*vec3(0, 1.0f, 0));
   model3->transform.rotate(-30.0f*Time->deltaTime*vec3(0, 1.0f, 0));
+
+  fpsCounter->text.setText(L"FPS: %d", (int)fps);
+  body1->get<RigidBody>()->restitution = restitution->get<NamedSlider>()->getValue();
+  body2->get<RigidBody>()->restitution = restitution->get<NamedSlider>()->getValue();
+  plane->get<RigidBody>()->restitution = restitution->get<NamedSlider>()->getValue();
+  Physics::g = gravity->get<NamedSlider>()->getValue();
+  body1->get<RigidBody>()->friction = friction->get<NamedSlider>()->getValue();
+  body2->get<RigidBody>()->friction = friction->get<NamedSlider>()->getValue();
+  plane->get<RigidBody>()->friction = friction->get<NamedSlider>()->getValue();
 }
 
 void GameManager::render() {
-  Fonts::select("Arial", 40);
-  Fonts::print(120, 100, 40, vec3(1.0f, 0.0f, 0.0f), "%d", (int)fps);
-  Fonts::select("Times New Roman", 40);
-  Fonts::print(20, 100, 40, vec3(1.0f), "FPS: ");
 }
 
 void GameManager::shutdown() {
@@ -112,17 +189,35 @@ void keyCallback(uint8 key, bool down) {
     model2->makeInactive();
     model3->makeInactive();
     model1->transform.position = vec3(0);
+    body1->makeInactive();
+    body2->makeInactive();
+    plane->makeInactive();
+    restitution->makeInactive();
+    gravity->makeInactive();
+    friction->makeInactive();
   }
   if (key == KEY_2 && down) {
     model1->makeInactive();
     model2->makeActive();
     model3->makeInactive();
+    body1->makeInactive();
+    body2->makeInactive();
+    plane->makeInactive();
+    restitution->makeInactive();
+    gravity->makeInactive();
+    friction->makeInactive();
   }
   if (key == KEY_3 && down) {
     model1->makeInactive();
     model2->makeInactive();
     model3->makeActive();
     model3->transform.position = vec3(0);
+    body1->makeInactive();
+    body2->makeInactive();
+    plane->makeInactive();
+    restitution->makeInactive();
+    gravity->makeInactive();
+    friction->makeInactive();
   }
   if (key == KEY_4 && down) {
     model1->makeActive();
@@ -130,6 +225,27 @@ void keyCallback(uint8 key, bool down) {
     model3->makeActive();
     model1->transform.position = vec3(-2.0f, 0, 0);
     model3->transform.position = vec3(2.0f, 0, 0);
+    body1->makeInactive();
+    body2->makeInactive();
+    plane->makeInactive();
+    restitution->makeInactive();
+    gravity->makeInactive();
+    friction->makeInactive();
+  }
+  if (key == KEY_5 && down) {
+    model1->makeInactive();
+    model2->makeInactive();
+    model3->makeInactive();
+    body1->transform.position = vec3(-1.0f, -0.5f, 0.0f);
+    body1->get<RigidBody>()->setImpulse(vec3(0.5f, 1.0f, 0.0f));
+    body2->transform.position = vec3(1.0f, 2.5f, 0.0f);
+    body2->get<RigidBody>()->setImpulse(vec3(0.0f, 0.0f, 0.0f));
+    body1->makeActive();
+    body2->makeActive();
+    plane->makeActive();
+    restitution->makeActive();
+    gravity->makeActive();
+    friction->makeActive();
   }
 }
 void buttonCallback(uint8 button, bool down) {
@@ -146,4 +262,5 @@ void wheelCallback(int8 delta) {
 
 void resizeCallback(uint16 w, uint16 h) {
 	KE_DEBUG("Window dimensions: %ux%u", w, h);
+  fpsCounter->rect = Rect(Renderer::getFrameSize().x-150, Renderer::getFrameSize().y-50, 100, 40, 0, vec4(0.0f));
 }

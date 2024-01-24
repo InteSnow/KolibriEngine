@@ -6,6 +6,7 @@
 #include "systems/InputSystem.h"
 #include "systems/Fonts.h"
 #include "systems/GUI.h"
+#include "systems/Physics.h"
 #include "renderer/renderer.h"
 
 bool shouldExit = false;
@@ -32,30 +33,32 @@ bool EngineLoop::init() {
   keOnKey.subscribe(keyCallback);
 
   this->gameManager.init();
+
   return 1;
 }
 
 bool EngineLoop::tick() { 
   static uint64 start = getTime();
   static uint64 end;
-
   pollEvents();
+  end = getTime();
+  _Time.deltaTime = (end - start)/1000000.0f;
+  _Time.time += _Time.deltaTime;
+  fps = 1000000.0f/(end - start);
+  start = end;
+  //KE_WARN("FPS = %f", 1000000.0f/(end - start));
+
+  if (_Time.deltaTime > 0.2f) return 1;
   InputSystem::update();
   Camera::updateAll(_Time.deltaTime);
   for (SceneObject* obj : SceneObject::objects) {
     obj->Update();
   }
+  Physics::update();
   for (GUIObject* obj : GUIObject::objects) {
     obj->Update();
   }
   this->gameManager.update();
-
-  end = getTime();
-  _Time.deltaTime = (end - start)/1000000.0f;
-  _Time.time += _Time.deltaTime;
-  fps = 1000000.0f/(end - start);
-  //KE_WARN("FPS = %f", 1000000.0f/(end - start));
-
   Renderer::startFrame();
   for (SceneObject* obj : SceneObject::objects) {
     obj->onRenderBegin();
@@ -79,7 +82,7 @@ bool EngineLoop::tick() {
   Renderer::endFrame(); 
 
   platformPresent();
-  start = end;
+
 
   return 1;
 }

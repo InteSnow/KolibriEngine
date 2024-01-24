@@ -4,6 +4,7 @@
 
 #include "systems/InputSystem.h"
 #include "core/Events.h"
+#include "renderer/renderer.h"
 
 #include <windows.h>
 #include <windowsx.h>
@@ -281,8 +282,9 @@ LRESULT procWinInput(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam) {
 
     case WM_SIZE:
       if (platform.toggling) return 0;
-      platform.width = LOWORD(lParam) & ~3;
-      platform.height = HIWORD(lParam) & ~3;
+      platform.width = LOWORD(lParam);
+      platform.height = HIWORD(lParam);
+      Renderer::onResize(platform.width, platform.height);
       keOnResize.fire(platform.width, platform.height);
       // static bool a = 0;
       // if (!a) {

@@ -7,6 +7,11 @@
 
 #include <sstream>
 #include <vector>
+#include <stdio.h>
+
+#ifdef KE_PLATFORM_KOS32
+#define vsnwprintf vswprintf
+#endif
 
 FT_Library Fonts::ft;
 Font* Fonts::activeFont;
@@ -17,17 +22,37 @@ static std::string to_string(uint32 n) {
   return s.str();
 }
 
-std::string sformat(const char* format, va_list vl) {
+std::wstring sformat(const wchar_t* format, va_list vl) {
   va_list vlc;
   va_copy(vlc, vl);
-  uint32 len = vsnprintf(NULL, 0, format, vlc);
+
+int32 len;
+
+#ifdef KE_PLATFORM_KOS32
+  len = 512;
+#else
+  len = vsnwprintf(NULL, 0, format, vlc);
+#endif
+
   va_end(vlc);
 
-  std::vector<char> data(len+1);
-  vsnprintf(data.data(), data.size(), format, vl);
+  std::vector<wchar_t> data(len+1, 0);
+  vsnwprintf(data.data(), data.size(), format, vl);
 
-  return std::string(data.data(), len);
+  for (len = 0; data[len]; len++);
+
+  std::wstring res;
+  try {
+  res = std::wstring(data.data(), len);
+  } catch (std::logic_error e) {
+    KE_ERROR("%d", len);
+  }
+  return res;
 }
+
+#ifdef KE_PLATFORM_KOS32
+#undef vsnwprintf
+#endif
 
 static std::unordered_map<std::string, Font> fonts;
 
@@ -45,7 +70,7 @@ void Fonts::shutdown() {
 
 bool Fonts::load(const char* path, uint32 height, uint32* glyphs, uint32 glyphCount) {
   FT_Face face;
-  if (FT_New_Face(ft, path, 0, &face)) {
+  if (FT_New_Face(ft, path, 0, &face) || !face->family_name) {
     KE_WARN("Failed to load font face");
     return 0;
   }
@@ -53,9 +78,10 @@ bool Fonts::load(const char* path, uint32 height, uint32* glyphs, uint32 glyphCo
   FT_Set_Pixel_Sizes(face, 0, height);
 
   std::string fontName = std::string(face->family_name) + std::string(" ") + to_string(height);
+
   fonts[fontName].height = height;
   fonts[fontName].familyName = face->family_name;
-  fonts[fontName].median = (face->ascender) >> 7;
+  fonts[fontName].median = (face->ascender+face->descender) >> 7;
 
   Character glyph = {};
   uint32 c;
@@ -75,6 +101,7 @@ bool Fonts::load(const char* path, uint32 height, uint32* glyphs, uint32 glyphCo
   FT_Done_Face(face);
 
   Fonts::activeFont = &fonts[fontName];
+
   return 1;
 }
 
@@ -87,7 +114,7 @@ bool Fonts::select(const char* familyName, uint32 height) {
   return 0;
 }
 
-uint32 Fonts::getWidth(uint32 height, const char* format, ...) {
+uint32 Fonts::getWidth(uint32 height, const wchar_t* format, ...) {
   va_list vl;
   va_start(vl, format);
   uint32 width = Fonts::getWidth(height, format, vl);
@@ -96,15 +123,15 @@ uint32 Fonts::getWidth(uint32 height, const char* format, ...) {
   return width;
 }
 
-void Fonts::print(uint32 x, uint32 y, uint32 height, vec3 color, const char* format, ...) {
+void Fonts::print(uint32 x, uint32 y, uint32 height, vec3 color, const wchar_t* format, ...) {
   va_list vl;
   va_start(vl, format);
   Fonts::print(x, y, height, color, format, vl);
   va_end(vl);
 }
 
-uint32 Fonts::getWidth(uint32 height, const char* format, va_list vl) {
-  std::string text = sformat(format, vl);
+uint32 Fonts::getWidth(uint32 height, const wchar_t* format, va_list vl) {
+  std::wstring text = sformat(format, vl);
 
   float scale = 1.0f;
   if (height) {
@@ -124,8 +151,8 @@ uint32 Fonts::getWidth(uint32 height, const char* format, va_list vl) {
 }
 
 
-void Fonts::print(uint32 x, uint32 y, uint32 height, vec3 color, const char* format, va_list vl) {
-  std::string text = sformat(format, vl);
+void Fonts::print(uint32 x, uint32 y, uint32 height, vec3 color, const wchar_t* format, va_list vl) {
+  std::wstring text = sformat(format, vl);
   
   float scale = 1.0f;
   if (height) {

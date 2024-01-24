@@ -23,7 +23,6 @@ bool Renderer::init(uint16 width, uint16 height) {
   frameHeight = height;
 
   keOnKey.subscribe(Renderer::onKey);
-  keOnResize.subscribe(Renderer::onResize);
   glClearColor(0.1f, 0.1f, 0.1f, 1);
   glEnable(GL_DEPTH_TEST);
   glClearDepth(1.0f);
@@ -149,6 +148,7 @@ void Renderer::startText() {
 void Renderer::onResize(uint16 width, uint16 height) {
   frameWidth = width;
   frameHeight = height;
+  if (!camera) return;
   projection = camera->getProjection(frameWidth, frameHeight);
   glViewport(0, 0, width, height);
 }

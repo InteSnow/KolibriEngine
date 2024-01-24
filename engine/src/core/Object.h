@@ -1,5 +1,6 @@
 #pragma once
 #include "defines.h"
+#include "core/Component.h"
 #include "core/Transform.h"
 #include <unordered_set>
 

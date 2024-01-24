@@ -51,7 +51,7 @@ Model Model::create(const char* path, ShadingType shading) {
       vertices.push_back(v);
     }
     std::string diff = std::string("resources/textures/") + materials[shapes[i].mesh.material_ids[0]].diffuse_texname;
-    model.meshes.push_back(Mesh::create(std::move(vertices), diff));
+    model.meshes.push_back(Mesh::create(std::move(vertices), shading, diff));
   }
   return model;
 }
@@ -64,17 +64,30 @@ void Model::destroy(Model& model) {
 }
 
 void Model::onDraw() {
-  if (this->shading == SHADE_LIT) {
-    glEnable(GL_LIGHTING);
-  } else {
-    glDisable(GL_LIGHTING);
-  }
-
   for (Mesh& mesh : this->meshes) {
-    mesh.draw();
+    mesh.onDraw();
   }
 }
 
 void Model::onUnregister() {
   Model::destroy(*this);
+}
+
+BoundingBox Model::getBoundingBox() const {
+  BoundingBox b = {};
+  BoundingBox mb = {};
+  for (uint32 i = 0; i < this->meshes.size(); i++) {
+    mb = this->meshes[i].getBoundingBox();
+    if (!i) {
+      b = mb;
+      continue;
+    }
+    b.min.x = b.min.x > mb.min.x ? mb.min.x : b.min.x;
+    b.min.y = b.min.y > mb.min.y ? mb.min.y : b.min.y;
+    b.min.z = b.min.z > mb.min.z ? mb.min.z : b.min.z;
+    b.max.x = b.max.x < mb.max.x ? mb.max.x : b.max.x;
+    b.max.y = b.max.y < mb.max.y ? mb.max.y : b.max.y;
+    b.max.z = b.max.z < mb.max.z ? mb.max.z : b.max.z;
+  }
+  return b;
 }

@@ -1,7 +1,6 @@
 #pragma once
 #include "defines.h"
 #include "utils/sml.hpp"
-#include "core/Component.h"
 
 class Transform {
   mat4 getModel(void);

@@ -42,7 +42,9 @@ void Button::onUnregister() {
 }
 
 Slider::Slider() {
-
+  this->trackColor = vec3(1.0f);
+  this->thumbColor = vec3(1.0f);
+  this->valColor = vec3(1.0f);
 }
 
 void Slider::onRegister() {
@@ -75,6 +77,15 @@ void Slider::setFont(const char* familyName, uint32 fontHeight, uint32 height, v
   valText = Text(&valRect, familyName, fontHeight, height);
 }
 
+void Slider::setColor(vec3 trackColor, vec3 thumbColor, vec3 valColor) {
+  this->trackColor = trackColor;
+  this->thumbColor = thumbColor;
+  this->valColor = valColor;
+  track.setColor(vec4(trackColor, 1.0f));
+  thumbRect.setColor(vec4(thumbColor, 1.0f));
+  valText.color = valColor;
+}
+
 vec2 Slider::getRange() const {
   return vec2(minVal, maxVal);
 }
@@ -86,15 +97,21 @@ float Slider::getValue() const {
 const Font* Slider::getFont() const {
   return font;
 }
-#include "core/logger.h"
+
+void Slider::getColor(vec3* trackColor, vec3* thumbColor, vec3* valColor) const {
+  if (trackColor) *trackColor = this->trackColor;
+  if (thumbColor) *thumbColor = this->thumbColor;
+  if (valColor) *valColor = this->valColor;
+}
+
 void Slider::Update() {
   if (pos.x != container->getPosition().x || pos.y != container->getPosition().y
    || size.x != container->getDimensions().x || size.y != container->getDimensions().y) {
     pos = container->getPosition();
     size = container->getDimensions();
     thumbX = pos.x + (val - minVal) / (maxVal - minVal) * (size.x - size.y);
-    thumbRect = Rect(thumbX, pos.y, size.y, size.y, size.y/2, vec4(1.0f));
-    track = Rect(pos.x+size.y/2, pos.y+size.y/3, size.x-size.y, size.y/3, size.y/6, vec4(1.0f));
+    thumbRect = Rect(thumbX, pos.y, size.y, size.y, size.y/2, vec4(thumbColor, 1.0f));
+    track = Rect(pos.x+size.y/2, pos.y+size.y/3, size.x-size.y, size.y/3, size.y/6, vec4(trackColor, 1.0f));
   }
 
   if (thumb->isPressed(BUTTON_LEFT)) {
@@ -104,7 +121,7 @@ void Slider::Update() {
     if (tempX == thumbX) return;
     thumbX = tempX;
     val = (thumbX-pos.x) * (maxVal-minVal) / (size.x - size.y) + minVal;
-    thumbRect = Rect(thumbX, pos.y, size.y, size.y, size.y/2, vec4(1.0f));
+    thumbRect = Rect(thumbX, pos.y, size.y, size.y, size.y/2, vec4(thumbColor, 1.0f));
   }
 }
 
@@ -115,7 +132,7 @@ void Slider::onShapeDraw() {
 
 void Slider::onTextDraw() {
   if (!valHeight) return;
-  valRect = Rect(pos.x+size.x+size.y/2, pos.y, Fonts::getWidth(valHeight, "%.2f", val), valHeight, 0, vec4(0.0f));
-  valText.setText("%.2f", val);
+  valRect = Rect(pos.x+size.x+size.y/2, pos.y+size.y/2-valHeight/2, Fonts::getWidth(valHeight, L"%.2f", val), valHeight, 0, vec4(0.0f));
+  valText.setText(L"%.2f", val);
   valText.onDraw();
 }

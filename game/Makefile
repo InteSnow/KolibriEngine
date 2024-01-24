@@ -17,7 +17,7 @@ IFLAGS = -I$(KOLIBRI_SDK)/sources/newlib/libc/include -I$(KOLIBRI_SDK)/sources/l
 SCRIPT = app.lds
 LDFLAGS = -static -nostdlib -T$(SCRIPT) --image-base 0 
 LFLAGS = -L$(MSYS)/home/autobuild/tools/win32/mingw32/lib -L../bin/kos32
-LIBS = -lkoengine -lfreetype -lTinyGL -lGL.dll -lglsl -lstdc++ -lsupc++ -lgcc -lc.dll 
+LIBS = -lkoengine -lfreetype -lTinyGL -lGL.dll -lglsl -lstdc++ -lsupc++ -lgcc -lc.dll
 
 TRANSFER = F:/
 

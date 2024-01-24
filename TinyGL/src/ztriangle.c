@@ -84,9 +84,9 @@ void ZB_fillTriangleSmooth(ZBuffer *zb,
 {						\
     zz=z >> ZB_POINT_Z_FRAC_BITS;		\
     if (ZCMP(zz,pz[_a])) {				\
-      pp[3 * _a]=or1 >> 8;\
+      pp[3 * _a]=ob1 >> 8;\
       pp[3 * _a + 1]=og1 >> 8;\
-      pp[3 * _a + 2]=ob1 >> 8;\
+      pp[3 * _a + 2]=or1 >> 8;\
       pz[_a]=zz;				\
     }\
     z+=dzdx;					\

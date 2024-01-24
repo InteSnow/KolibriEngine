@@ -4,6 +4,7 @@
 #include "systems/InputSystem.h"
 #include "core/Events.h"
 #include "core/logger.h"
+#include "renderer/renderer.h"
 #include <cstring>
 #include <cstdio>
 #include <map>
@@ -309,6 +310,7 @@ void pollEvents() {
 
         platform.width = width;
         platform.height = height;
+        Renderer::onResize(platform.width, platform.height);
         keOnResize.fire(platform.width, platform.height);
       }
       break;

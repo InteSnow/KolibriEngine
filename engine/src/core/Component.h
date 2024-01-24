@@ -17,6 +17,7 @@ class SceneComponent {
   friend SceneObject;
 public:
   virtual ~SceneComponent(void) = default;
+  SceneObject* parent;
 };
 
 class GUIComponent {
@@ -32,4 +33,5 @@ public:
   virtual ~GUIComponent(void) = default;
 
   Rect* container;
+  GUIObject* parent;
 };

@@ -1,8 +1,9 @@
 #pragma once
 #include "defines.h"
-#include "renderer/Texture.h"
-#include "utils/sml.hpp"
 #include "core/Component.h"
+#include "renderer/Texture.h"
+#include "physics/Collider.h"
+#include "utils/sml.hpp"
 #include <vector>
 #include <string>
 
@@ -20,16 +21,19 @@ enum ShadingType {
 
 class Model;
 
-class Mesh {
+class Mesh : public SceneComponent {
   std::vector<Vertex> vertices;
 
   bool hasDT;
   Texture diffTex;
+  ShadingType shading;
 
-  void draw(void);
+  void onDraw(void) override;
+  void onUnregister(void) override;
 
   friend Model;
 public:
-  static Mesh create(std::vector<Vertex>&& vertices, std::string diffuse = "");
+  static Mesh create(std::vector<Vertex>&& vertices, ShadingType shading, std::string diffuse = "");
   static void destroy(Mesh& mesh);
+  BoundingBox getBoundingBox(void) const;
 };

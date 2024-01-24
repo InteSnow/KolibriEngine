@@ -16,4 +16,5 @@ public:
   static Model create(const char* path, ShadingType shading = SHADE_UNLIT);
   static void destroy(Model& model);
 
+  BoundingBox getBoundingBox(void) const;
 };
